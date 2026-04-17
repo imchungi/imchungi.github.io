@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 — SIMBE Workout</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --neon: #00FF7F;
+      --neon2: #CCFF00;
+      --bg: #0a0a0a;
+      --card: #161616;
+      --border: #222;
+      --text: #e0e0e0;
+      --muted: #666;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,255,127,0.015) 2px,
+        rgba(0,255,127,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── NAV ── */
+    nav {
+      padding: 1.5rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--neon);
+      text-decoration: none;
+    }
+
+    .back-link {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--neon); }
+
+    /* ── HEADER ── */
+    header {
+      padding: 4rem 2.5rem 3rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: 'PRIVACY';
+      position: absolute;
+      right: -0.05em;
+      bottom: -0.2em;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(5rem, 18vw, 14rem);
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(0,255,127,0.05);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--neon);
+      border: 1px solid var(--neon);
+      padding: 0.25em 0.8em;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: #fff;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 span { color: var(--neon); }
+
+    .header-meta {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── CONTENT ── */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 2.5rem 6rem;
+    }
+
+    .section-block {
+      margin-bottom: 3.5rem;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 2rem;
+      height: 1px;
+      background: var(--neon);
+    }
+
+    h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.9;
+      margin-bottom: 0.8rem;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0.5rem 0 0.8rem 0;
+    }
+
+    ul li {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.9;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--neon);
+    }
+
+    .highlight-box {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--neon);
+      background: var(--card);
+      padding: 1.5rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box p {
+      margin-bottom: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 0;
+    }
+
+    footer a {
+      color: var(--neon);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      nav, header, main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">IMCHUNGI</a>
+  <a class="back-link" href="index.html">← 홈으로</a>
+</nav>
+
+<header>
+  <div class="tag">Legal</div>
+  <h1>개인정보<br><span>처리방침</span></h1>
+  <p class="header-meta">SIMBE Workout · 최종 업데이트: 2025년 4월 17일</p>
+</header>
+
+<main>
+
+  <div class="highlight-box">
+    <p>
+      본 방침은 <strong>SIMBE Workout</strong> 앱(이하 "앱")을 통해 수집되는 개인정보의 처리 방식을 설명합니다.
+      앱을 사용함으로써 본 방침에 동의하는 것으로 간주됩니다.
+    </p>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">01</div>
+    <h2>수집하는 정보</h2>
+    <p>앱은 다음과 같은 정보를 수집할 수 있습니다.</p>
+    <ul>
+      <li>Firebase 인증을 통한 이메일 주소 및 사용자 ID</li>
+      <li>운동 기록 데이터 (운동 종류, 세트, 중량, 횟수)</li>
+      <li>구독 상태 및 결제 관련 정보 (Google Play 처리)</li>
+      <li>앱 사용 통계 (Firebase Analytics를 통한 익명 데이터)</li>
+      <li>광고 식별자 (Google AdMob 광고 제공 목적)</li>
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">02</div>
+    <h2>정보의 이용 목적</h2>
+    <ul>
+      <li>앱 서비스 제공 및 운동 데이터 저장·동기화</li>
+      <li>구독 서비스 관리 및 결제 처리</li>
+      <li>앱 개선을 위한 사용 패턴 분석</li>
+      <li>맞춤형 광고 제공 (AdMob)</li>
+      <li>사용자 문의 응대</li>
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">03</div>
+    <h2>제3자 서비스</h2>
+    <p>앱은 다음 제3자 서비스를 사용하며, 각 서비스의 개인정보처리방침이 적용됩니다.</p>
+    <ul>
+      <li><strong>Google Firebase</strong> — 인증, 데이터베이스, 분석</li>
+      <li><strong>Google AdMob</strong> — 광고 서비스</li>
+      <li><strong>Google Play Billing</strong> — 구독 결제 처리</li>
+    </ul>
+    <div class="highlight-box">
+      <p>결제 정보는 Google Play에서 직접 처리하며, 앱 개발자는 카드 정보 등 결제 세부 정보에 접근하지 않습니다.</p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">04</div>
+    <h2>데이터 보관 및 삭제</h2>
+    <p>사용자 데이터는 계정이 활성 상태인 동안 보관됩니다. 계정 삭제 시 관련 데이터도 함께 삭제됩니다.</p>
+    <p>데이터 삭제를 원하시는 경우 아래 연락처로 요청하시면 처리해 드립니다.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">05</div>
+    <h2>아동 개인정보</h2>
+    <p>앱은 만 14세 미만 아동을 대상으로 하지 않습니다. 만 14세 미만 아동의 개인정보가 수집된 사실을 인지하는 경우 즉시 삭제 조치합니다.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">06</div>
+    <h2>개인정보 보호책임자</h2>
+    <p>개인정보 처리에 관한 문의사항은 아래로 연락주십시오.</p>
+    <div class="highlight-box">
+      <p>
+        개발자: imchungi<br>
+        위치: 강원특별자치도 태백시<br>
+        이메일: <a href="mailto:ixelomi@gmail.com" style="color:var(--neon);">ixelomi@gmail.com</a>
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="section-block">
+    <div class="section-label">07</div>
+    <h2>방침 변경</h2>
+    <p>본 개인정보처리방침은 법령 또는 서비스 변경에 따라 수정될 수 있습니다. 변경 시 본 페이지를 통해 공지합니다.</p>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2025 imchungi — Taebaek, Gangwon</p>
+  <a href="index.html">← 홈으로</a>
+</footer>
+
+</body>
+</html>

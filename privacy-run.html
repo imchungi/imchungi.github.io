@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 — Run Metronome</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --neon: #00FF7F;
+      --neon2: #CCFF00;
+      --bg: #0a0a0a;
+      --card: #161616;
+      --border: #222;
+      --text: #e0e0e0;
+      --muted: #666;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,255,127,0.015) 2px,
+        rgba(0,255,127,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── NAV ── */
+    nav {
+      padding: 1.5rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--neon);
+      text-decoration: none;
+    }
+
+    .back-link {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--neon); }
+
+    /* ── HEADER ── */
+    header {
+      padding: 4rem 2.5rem 3rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: 'PRIVACY';
+      position: absolute;
+      right: -0.05em;
+      bottom: -0.2em;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(5rem, 18vw, 14rem);
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(0,255,127,0.05);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--neon);
+      border: 1px solid var(--neon);
+      padding: 0.25em 0.8em;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: #fff;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 span { color: var(--neon); }
+
+    .header-meta {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── LANG BADGE ── */
+    .lang-badge {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--neon2);
+      border: 1px solid var(--neon2);
+      padding: 0.2em 0.7em;
+      margin-left: 0.8rem;
+      vertical-align: middle;
+      opacity: 0.8;
+    }
+
+    /* ── CONTENT ── */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 2.5rem 6rem;
+    }
+
+    .section-block {
+      margin-bottom: 3.5rem;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 2rem;
+      height: 1px;
+      background: var(--neon);
+    }
+
+    h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.9;
+      margin-bottom: 0.8rem;
+    }
+
+    .en {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+      padding-left: 1rem;
+      border-left: 1px solid var(--border);
+    }
+
+    ul {
+      list-style: none;
+      margin: 0.5rem 0 0.8rem 0;
+    }
+
+    ul li {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.9;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--neon);
+    }
+
+    ul li .en-li {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .highlight-box {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--neon);
+      background: var(--card);
+      padding: 1.5rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box p {
+      margin-bottom: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 0;
+    }
+
+    footer a {
+      color: var(--neon);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      nav, header, main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">IMCHUNGI</a>
+  <a class="back-link" href="index.html">← 홈으로</a>
+</nav>
+
+<header>
+  <div class="tag">Legal</div>
+  <h1>개인정보<br><span>처리방침</span></h1>
+  <p class="header-meta">
+    Run Metronome · 최종 업데이트: 2025년 5월 20일
+    <span class="lang-badge">KO · EN</span>
+  </p>
+</header>
+
+<main>
+
+  <div class="highlight-box">
+    <p>
+      본 방침은 <strong>Run Metronome</strong> 앱(이하 "앱")을 통해 수집되는 개인정보의 처리 방식을 설명합니다.
+      앱을 사용함으로써 본 방침에 동의하는 것으로 간주됩니다.
+    </p>
+    <p class="en" style="margin-top:0.8rem; margin-bottom:0;">
+      This policy describes how <strong>Run Metronome</strong> (the "App") handles information collected through its use.
+      By using the App, you agree to this policy.
+    </p>
+  </div>
+
+  <!-- 01 -->
+  <div class="section-block">
+    <div class="section-label">01</div>
+    <h2>수집하는 정보 · Information We Collect</h2>
+    <p>앱은 다음과 같은 정보를 수집할 수 있습니다.</p>
+    <p class="en">The App may collect the following information.</p>
+    <ul>
+      <li>
+        광고 식별자 (Google AdMob 광고 제공 목적)
+        <span class="en-li">Advertising identifier (for Google AdMob ads)</span>
+      </li>
+      <li>
+        일회성 인앱결제 영수증 정보 (광고 제거 구매, Google Play 처리)
+        <span class="en-li">One-time in-app purchase receipt (ad removal purchase, processed by Google Play)</span>
+      </li>
+      <li>
+        앱 사용 통계 (익명 충돌 보고 등)
+        <span class="en-li">App usage statistics (e.g., anonymous crash reports)</span>
+      </li>
+    </ul>
+    <div class="highlight-box">
+      <p>
+        앱은 계정 생성, 로그인, 개인 운동 데이터 저장 기능을 제공하지 않습니다.
+        이름, 이메일 주소 등 개인 식별 정보는 수집하지 않습니다.
+      </p>
+      <p class="en">
+        The App does not offer account creation, login, or personal data storage.
+        No personally identifiable information such as name or email address is collected.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 02 -->
+  <div class="section-block">
+    <div class="section-label">02</div>
+    <h2>정보의 이용 목적 · Purpose of Use</h2>
+    <ul>
+      <li>
+        광고 표시 및 광고 성과 측정 (AdMob)
+        <span class="en-li">Displaying ads and measuring ad performance (AdMob)</span>
+      </li>
+      <li>
+        일회성 인앱결제 처리 및 광고 제거 기능 잠금 해제 확인
+        <span class="en-li">Processing one-time purchases and verifying ad removal unlock</span>
+      </li>
+      <li>
+        앱 안정성 개선 및 오류 수정
+        <span class="en-li">Improving app stability and fixing errors</span>
+      </li>
+      <li>
+        사용자 문의 응대
+        <span class="en-li">Responding to user inquiries</span>
+      </li>
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 03 -->
+  <div class="section-block">
+    <div class="section-label">03</div>
+    <h2>광고 · Advertising</h2>
+    <p>앱은 Google AdMob을 통해 광고를 표시합니다. AdMob은 더 관련성 높은 광고를 제공하기 위해 광고 식별자를 사용할 수 있습니다.</p>
+    <p class="en">The App displays ads via Google AdMob. AdMob may use your advertising identifier to serve more relevant ads.</p>
+    <ul>
+      <li>
+        <strong>Google AdMob 개인정보처리방침</strong>: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color:var(--neon);">policies.google.com/privacy</a>
+        <span class="en-li">Google AdMob Privacy Policy</span>
+      </li>
+    </ul>
+    <div class="highlight-box">
+      <p>
+        앱 내에서 <strong>광고 제거</strong> 일회성 구매를 완료하면 광고가 영구적으로 비활성화되며, 이후 AdMob을 통한 광고 식별자 수집도 중단됩니다.
+      </p>
+      <p class="en">
+        Completing the <strong>Remove Ads</strong> one-time purchase permanently disables all ads, after which AdMob will no longer collect your advertising identifier through the App.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 04 -->
+  <div class="section-block">
+    <div class="section-label">04</div>
+    <h2>인앱결제 · In-App Purchase</h2>
+    <p>앱은 광고 제거를 위한 <strong>일회성 인앱결제</strong>를 제공합니다. 구독 상품은 없습니다.</p>
+    <p class="en">The App offers a <strong>one-time in-app purchase</strong> to remove ads. There are no subscription products.</p>
+    <div class="highlight-box">
+      <p>
+        결제는 <strong>Google Play</strong>에서 직접 처리합니다. 앱 개발자는 카드 번호 등 결제 세부 정보에 접근하지 않습니다.
+        환불은 Google Play 정책에 따릅니다.
+      </p>
+      <p class="en">
+        Payments are processed directly by <strong>Google Play</strong>. The developer does not access payment details such as card numbers.
+        Refunds are subject to Google Play's refund policy.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 05 -->
+  <div class="section-block">
+    <div class="section-label">05</div>
+    <h2>제3자 서비스 · Third-Party Services</h2>
+    <p>앱은 다음 제3자 서비스를 사용하며, 각 서비스의 개인정보처리방침이 적용됩니다.</p>
+    <p class="en">The App uses the following third-party services, each governed by their own privacy policy.</p>
+    <ul>
+      <li>
+        <strong>Google AdMob</strong> — 광고 서비스
+        <span class="en-li">Advertising service</span>
+      </li>
+      <li>
+        <strong>Google Play Billing</strong> — 일회성 인앱결제 처리
+        <span class="en-li">One-time in-app purchase processing</span>
+      </li>
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 06 -->
+  <div class="section-block">
+    <div class="section-label">06</div>
+    <h2>데이터 보관 및 삭제 · Data Retention & Deletion</h2>
+    <p>앱은 서버에 사용자 데이터를 저장하지 않습니다. 앱을 삭제하면 기기에 저장된 모든 데이터(광고 제거 구매 상태 등)가 함께 삭제됩니다.</p>
+    <p class="en">The App does not store user data on any server. Uninstalling the App removes all locally stored data (including ad removal purchase status).</p>
+    <p>데이터 관련 문의는 아래 연락처로 요청하시면 처리해 드립니다.</p>
+    <p class="en">For any data-related inquiries, please contact us at the address below.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 07 -->
+  <div class="section-block">
+    <div class="section-label">07</div>
+    <h2>아동 개인정보 · Children's Privacy</h2>
+    <p>앱은 만 14세 미만 아동을 대상으로 하지 않습니다. 만 14세 미만 아동의 개인정보가 수집된 사실을 인지하는 경우 즉시 삭제 조치합니다.</p>
+    <p class="en">The App is not directed at children under the age of 14. If we become aware that personal information from a child under 14 has been collected, we will delete it immediately.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 08 -->
+  <div class="section-block">
+    <div class="section-label">08</div>
+    <h2>개인정보 보호책임자 · Contact</h2>
+    <p>개인정보 처리에 관한 문의사항은 아래로 연락주십시오.</p>
+    <p class="en">For inquiries regarding personal information, please contact us below.</p>
+    <div class="highlight-box">
+      <p>
+        개발자 · Developer: imchungi<br>
+        위치 · Location: 강원특별자치도 태백시, Republic of Korea<br>
+        이메일 · Email: <a href="mailto:ixelomi@gmail.com" style="color:var(--neon);">ixelomi@gmail.com</a>
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 09 -->
+  <div class="section-block">
+    <div class="section-label">09</div>
+    <h2>방침 변경 · Policy Updates</h2>
+    <p>본 개인정보처리방침은 법령 또는 서비스 변경에 따라 수정될 수 있습니다. 변경 시 본 페이지를 통해 공지합니다.</p>
+    <p class="en">This privacy policy may be updated in response to legal changes or service modifications. Any changes will be announced on this page.</p>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2025 imchungi — Taebaek, Gangwon</p>
+  <a href="index.html">← 홈으로</a>
+</footer>
+
+</body>
+</html>

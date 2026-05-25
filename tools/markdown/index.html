@@ -503,54 +503,32 @@ console.log(greet('imchungi'));
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
-  /* ── Copy (서식 복사 — text/html ClipboardItem) ── */
-  btnCopy.addEventListener('click', async function () {
-    const inner = preview.innerHTML;
-    if (!inner || inner.includes('preview-empty')) {
+  /* ── 서식 복사 — Selection API + execCommand('copy') ── */
+  btnCopy.addEventListener('click', function () {
+    /* 빈 상태 확인 */
+    if (!preview.innerHTML || preview.querySelector('.preview-empty')) {
       showToast('복사할 내용이 없습니다');
       return;
     }
 
     /*
-     * 완전한 HTML 문서로 감싸야 Word / 네이버 블로그 / 노션 등이
-     * text/html 타입을 올바르게 해석합니다.
+     * Range로 preview DOM 전체를 선택 → execCommand('copy')
+     * 브라우저가 렌더링된 DOM을 그대로 클립보드에 넣으므로
+     * text/html + text/plain 양쪽 포맷이 자동으로 채워집니다.
+     * 노션·네이버 블로그·워드 등에 서식 그대로 붙여넣기 가능.
      */
-    const fullHtml =
-      '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>' +
-      inner +
-      '</body></html>';
+    const range = document.createRange();
+    range.selectNodeContents(preview);
 
-    /* 1순위: clipboard.write() — rich text 붙여넣기 지원 */
-    if (navigator.clipboard && window.ClipboardItem) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/html':  new Blob([fullHtml],          { type: 'text/html'  }),
-            'text/plain': new Blob([preview.innerText], { type: 'text/plain' }),
-          })
-        ]);
-        showToast('✓ 서식 복사 완료');
-        return;
-      } catch (e) {
-        /* 권한 거부 등 → fallback */
-      }
-    }
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
-    /* 2순위: writeText() — HTML 소스 텍스트로 복사 */
-    try {
-      await navigator.clipboard.writeText(inner);
-      showToast('HTML 소스 복사 완료');
-    } catch {
-      /* 3순위: execCommand (레거시) */
-      const ta = document.createElement('textarea');
-      ta.value = inner;
-      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showToast('HTML 소스 복사 완료');
-    }
+    const ok = document.execCommand('copy');
+
+    sel.removeAllRanges(); /* 선택 해제 */
+
+    showToast(ok ? '✓ 서식 복사 완료' : '복사 실패 — 브라우저 설정을 확인하세요');
   });
 
   /* ── Clear ── */

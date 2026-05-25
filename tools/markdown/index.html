@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown Converter — imchungi Tools</title>
+  <meta name="description" content="마크다운을 HTML로 실시간 변환. 복사 버튼 및 자동 저장 지원." />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/tools/shared/theme.css" />
+
+  <!-- marked.js — Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* ── FULL-HEIGHT SPLIT PANE LAYOUT ── */
+    html, body { height: 100%; overflow: hidden; }
+
+    .app-layout { height: 100vh; overflow: hidden; }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      padding: 1.25rem 2rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .page-header-left { display: flex; align-items: baseline; gap: 1rem; }
+
+    .page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.6rem;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .page-title span { color: var(--neon); }
+
+    .tag { margin-bottom: 0; align-self: center; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 0.5rem;
+    }
+
+    /* ── SPLIT PANE ── */
+    .editor-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .pane + .pane {
+      border-left: 1px solid var(--border);
+    }
+
+    /* ── PANE HEADER ── */
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+
+    .pane-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── EDITOR TEXTAREA ── */
+    #md-input {
+      flex: 1;
+      resize: none;
+      border: none;
+      outline: none;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.75;
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    #md-input::placeholder { color: var(--border); }
+
+    #md-input:focus {
+      box-shadow: inset 2px 0 0 rgba(0,255,127,0.4);
+    }
+
+    /* ── PREVIEW PANE ── */
+    .preview-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.75rem;
+      min-height: 0;
+    }
+
+    /* ── MARKDOWN PREVIEW STYLES ── */
+    .md-preview { color: var(--text); font-size: 0.92rem; line-height: 1.85; }
+
+    .md-preview h1,
+    .md-preview h2,
+    .md-preview h3,
+    .md-preview h4,
+    .md-preview h5,
+    .md-preview h6 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #fff;
+      margin: 1.5rem 0 0.5rem;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+    }
+
+    .md-preview h1 { font-size: 2rem; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .md-preview h2 { font-size: 1.5rem; color: var(--neon); }
+    .md-preview h3 { font-size: 1.2rem; color: var(--neon2); }
+    .md-preview h4 { font-size: 1rem; color: var(--text); }
+
+    .md-preview p { margin: 0.6rem 0; }
+
+    .md-preview strong { color: #fff; font-weight: 700; }
+    .md-preview em { color: var(--neon2); font-style: italic; }
+    .md-preview del { color: var(--muted); text-decoration: line-through; }
+
+    .md-preview a { color: var(--neon); text-decoration: none; border-bottom: 1px solid rgba(0,255,127,0.3); }
+    .md-preview a:hover { border-color: var(--neon); }
+
+    .md-preview code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82em;
+      background: var(--card);
+      color: var(--neon2);
+      padding: 0.15em 0.45em;
+      border: 1px solid var(--border);
+    }
+
+    .md-preview pre {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--neon);
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .md-preview pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .md-preview blockquote {
+      border-left: 2px solid var(--neon);
+      padding: 0.5rem 1rem;
+      margin: 1rem 0;
+      color: var(--muted);
+      background: rgba(0,255,127,0.03);
+    }
+
+    .md-preview blockquote p { margin: 0; }
+
+    .md-preview ul, .md-preview ol {
+      padding-left: 1.5rem;
+      margin: 0.5rem 0;
+    }
+
+    .md-preview ul { list-style: none; }
+    .md-preview ul li { position: relative; padding-left: 1rem; }
+    .md-preview ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--neon);
+    }
+
+    .md-preview ol li { padding-left: 0.25rem; }
+
+    .md-preview li { margin: 0.2rem 0; }
+
+    .md-preview hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .md-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.88rem;
+    }
+
+    .md-preview th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--neon);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      background: var(--card);
+      text-align: left;
+    }
+
+    .md-preview td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.75rem;
+      color: var(--text);
+    }
+
+    .md-preview tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .md-preview img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+    }
+
+    /* Empty state */
+    .preview-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--border);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.6em 1.2em;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── MOBILE TAB SWITCHER ── */
+    .tab-bar {
+      display: none;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: none;
+      background: transparent;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: color 0.15s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn.active {
+      color: var(--neon);
+      border-bottom-color: var(--neon);
+    }
+
+    @media (max-width: 768px) {
+      .tab-bar { display: flex; }
+      .editor-area { grid-template-columns: 1fr; }
+      .pane + .pane { border-left: none; border-top: 1px solid var(--border); }
+      .pane.hidden { display: none; }
+
+      .page-header { padding: 1rem 1.25rem; }
+      .page-header-left { gap: 0.5rem; }
+      .page-title { font-size: 1.2rem; }
+      .stat-badge { display: none; }
+
+      #md-input { padding: 1rem; }
+      .preview-scroll { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- Sidebar injected by JS -->
+  <aside id="sidebar"></aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Page Header / Toolbar -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="tag">Tool</div>
+        <div class="page-title">MARKDOWN <span>CONVERTER</span></div>
+      </div>
+      <div class="toolbar">
+        <span class="stat-badge" id="stat-chars">0 chars</span>
+        <span class="stat-badge" id="stat-words">0 words</span>
+        <button class="btn" id="btn-clear">Clear</button>
+        <button class="btn primary" id="btn-copy">Copy HTML</button>
+      </div>
+    </div>
+
+    <!-- Mobile Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="editor">✏️ Editor</button>
+      <button class="tab-btn" data-tab="preview">👁 Preview</button>
+    </div>
+
+    <!-- Split Pane -->
+    <div class="editor-area">
+
+      <!-- Left: Markdown Input -->
+      <div class="pane pane-input" id="pane-editor">
+        <div class="pane-header">
+          <span class="pane-label">Markdown</span>
+        </div>
+        <textarea id="md-input" spellcheck="false" placeholder="마크다운을 입력하세요..."></textarea>
+      </div>
+
+      <!-- Right: HTML Preview -->
+      <div class="pane pane-preview" id="pane-preview">
+        <div class="pane-header">
+          <span class="pane-label">Preview</span>
+          <span class="pane-label" id="preview-tag" style="color: var(--neon); font-size: 0.55rem;">LIVE</span>
+        </div>
+        <div class="preview-scroll">
+          <div class="md-preview" id="preview"></div>
+        </div>
+      </div>
+
+    </div><!-- /editor-area -->
+
+  </div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="/tools/shared/sidebar-loader.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ── Config ── */
+  const STORAGE_KEY = 'imchungi-md-converter';
+  const DEBOUNCE_MS = 150;
+
+  const DEFAULT_MD = `# 마크다운 변환기
+
+> 왼쪽에 마크다운을 입력하면 오른쪽에서 **실시간**으로 미리보기가 업데이트됩니다.
+
+## 지원 문법
+
+**볼드**, *이탤릭*, ~~취소선~~, \`인라인 코드\`
+
+### 코드 블록
+\`\`\`javascript
+const greet = name => \`Hello, \${name}!\`;
+console.log(greet('imchungi'));
+\`\`\`
+
+### 목록
+- 아이템 1
+- 아이템 2
+  - 중첩 아이템
+
+1. 순서 있는 목록
+2. 두 번째 항목
+
+### 표
+
+| 스택     | 용도             |
+|----------|------------------|
+| Flutter  | 크로스플랫폼 앱  |
+| Firebase | 백엔드 서비스    |
+| Dart     | 프로그래밍 언어  |
+
+---
+
+*HTML 복사 버튼으로 변환된 코드를 클립보드에 복사할 수 있습니다. 작성 내용은 자동 저장됩니다.*
+`;
+
+  /* ── Elements ── */
+  const input     = document.getElementById('md-input');
+  const preview   = document.getElementById('preview');
+  const btnCopy   = document.getElementById('btn-copy');
+  const btnClear  = document.getElementById('btn-clear');
+  const statChars = document.getElementById('stat-chars');
+  const statWords = document.getElementById('stat-words');
+  const toast     = document.getElementById('toast');
+
+  /* ── marked options ── */
+  marked.use({ breaks: true, gfm: true });
+
+  /* ── Render ── */
+  function render(text) {
+    if (!text.trim()) {
+      preview.innerHTML = '<div class="preview-empty">미리보기</div>';
+      return;
+    }
+    preview.innerHTML = marked.parse(text);
+  }
+
+  /* ── Stats ── */
+  function updateStats(text) {
+    const chars = text.length;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    statChars.textContent = chars.toLocaleString() + ' chars';
+    statWords.textContent = words.toLocaleString() + ' words';
+  }
+
+  /* ── Debounce ── */
+  let timer;
+  function onInput() {
+    const text = input.value;
+    localStorage.setItem(STORAGE_KEY, text);
+    updateStats(text);
+    clearTimeout(timer);
+    timer = setTimeout(() => render(text), DEBOUNCE_MS);
+  }
+
+  /* ── Toast ── */
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  /* ── Copy HTML ── */
+  btnCopy.addEventListener('click', async function () {
+    const html = preview.innerHTML;
+    if (!html || html.includes('preview-empty')) {
+      showToast('복사할 내용이 없습니다');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(html);
+      showToast('HTML 복사 완료!');
+    } catch {
+      /* fallback */
+      const ta = document.createElement('textarea');
+      ta.value = html;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('HTML 복사 완료!');
+    }
+  });
+
+  /* ── Clear ── */
+  btnClear.addEventListener('click', function () {
+    if (!input.value.trim()) return;
+    if (!confirm('작성 내용을 지우시겠습니까?')) return;
+    input.value = '';
+    localStorage.removeItem(STORAGE_KEY);
+    onInput();
+    input.focus();
+  });
+
+  /* ── Mobile Tabs ── */
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const paneEditor  = document.getElementById('pane-editor');
+  const panePreview = document.getElementById('pane-preview');
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.tab === 'editor') {
+        paneEditor.classList.remove('hidden');
+        panePreview.classList.add('hidden');
+      } else {
+        paneEditor.classList.add('hidden');
+        panePreview.classList.remove('hidden');
+      }
+    });
+  });
+
+  /* ── Init ── */
+  function init() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    input.value = saved !== null ? saved : DEFAULT_MD;
+    render(input.value);
+    updateStats(input.value);
+    input.addEventListener('input', onInput);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

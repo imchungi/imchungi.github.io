@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"f:\\\\zHome\\\\githubhome\\\\imchungi.github.io\\\\tools\\\\shared\" \"f:\\\\zHome\\\\githubhome\\\\imchungi.github.io\\\\tools\\\\markdown\")",
+      "Bash(git add *)"
+    ],
+    "additionalDirectories": [
+      "f:\\zHome\\githubhome\\imchungi.github.io\\tools"
+    ]
+  }
+}

@@ -1,4 +1,7 @@
 tailwind.config = {
+  corePlugins: {
+    preflight: false,  // 기존 HTML의 자체 CSS와 충돌 방지
+  },
   theme: {
     extend: {
       colors: {

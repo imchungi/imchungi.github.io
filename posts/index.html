@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitNomad — Posts</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/assets/js/tailwind.config.js"></script>
+  <style>
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 2px,
+        rgba(0,255,127,0.012) 2px, rgba(0,255,127,0.012) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    html, body {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    /* topbar glow line */
+    #topbar {
+      border-bottom: 1px solid #222;
+      box-shadow: 0 1px 0 0 rgba(0,255,127,0.08);
+    }
+
+    /* sidebar scroll */
+    #sidebar {
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #222 transparent;
+    }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+    /* content scroll */
+    #content {
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #222 transparent;
+    }
+    #content::-webkit-scrollbar { width: 4px; }
+    #content::-webkit-scrollbar-track { background: transparent; }
+    #content::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+    /* neon cursor blink */
+    .cursor-blink::after {
+      content: '▋';
+      color: #00FF7F;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+  </style>
+</head>
+<body class="flex flex-col" style="height:100vh;">
+
+  <!-- TOP BAR -->
+  <header id="topbar" class="flex items-center gap-4 px-6 py-3 shrink-0">
+    <a href="/" class="text-muted hover:text-neon transition-colors text-sm font-mono">←</a>
+    <span class="w-px h-4 bg-line"></span>
+    <h1 class="font-barlow font-black text-xl tracking-widest text-neon uppercase">
+      GitNomad
+    </h1>
+    <span class="text-muted font-mono text-xs">/ posts</span>
+    <div class="ml-auto flex items-center gap-3">
+      <span class="text-muted font-mono text-xs cursor-blink"></span>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div class="flex flex-1 min-h-0">
+
+    <!-- LEFT SIDEBAR: post list -->
+    <aside id="sidebar" class="w-72 shrink-0 border-r border-line flex flex-col">
+      <div class="px-4 py-3 border-b border-line">
+        <span class="font-mono text-xs text-muted uppercase tracking-widest">Posts</span>
+      </div>
+      <ul id="post-list" class="flex-1 p-2">
+        <!-- empty state -->
+        <li id="empty-state" class="flex flex-col items-center justify-center gap-2 py-16 text-center">
+          <span class="font-mono text-2xl text-line select-none">[ ]</span>
+          <p class="font-mono text-xs text-muted">no posts yet</p>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- RIGHT CONTENT: post body -->
+    <main id="content" class="flex-1 flex flex-col">
+      <div id="welcome" class="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
+        <span class="font-mono text-4xl text-line select-none">—</span>
+        <p class="font-barlow text-lg tracking-widest text-muted uppercase">Select a post</p>
+        <p class="font-mono text-xs text-muted">글을 선택하면 여기에 표시됩니다</p>
+      </div>
+      <article id="post-body" class="hidden flex-1 p-10 max-w-3xl mx-auto w-full"></article>
+    </main>
+
+  </div>
+
+  <script src="reader.js"></script>
+</body>
+</html>

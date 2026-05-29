@@ -94,6 +94,14 @@
     });
   }
 
+  // ── Strip YAML frontmatter ────────────────────────────────
+  function stripFrontmatter(text) {
+    if (!text.startsWith('---')) return text;
+    const end = text.indexOf('\n---', 3);
+    if (end === -1) return text;
+    return text.slice(end + 4).trimStart();
+  }
+
   // ── Load & render post ────────────────────────────────────
   async function loadPost(post) {
     activePostId = post.id;
@@ -101,15 +109,17 @@
 
     welcome.classList.add('hidden');
     postBody.classList.remove('hidden');
-    postBody.innerHTML = '<p class="font-mono text-xs" style="color:#9ca3af">Loading…</p>';
+    postBody.style.background = '#ffffff';
+    postBody.style.color      = '#000000';
+    postBody.innerHTML = '<p style="font-family:monospace;font-size:12px;color:#9ca3af">Loading…</p>';
 
     try {
       const res = await fetch(post.path);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const md = await res.text();
-      postBody.innerHTML = marked.parse(md);
+      const raw = await res.text();
+      postBody.innerHTML = marked.parse(stripFrontmatter(raw));
     } catch (err) {
-      postBody.innerHTML = `<p class="font-mono text-xs" style="color:#ef4444">파일을 불러오지 못했습니다: ${err.message}</p>`;
+      postBody.innerHTML = `<p style="font-family:monospace;font-size:12px;color:#ef4444">파일을 불러오지 못했습니다: ${err.message}</p>`;
     }
   }
 })();

@@ -13,7 +13,7 @@
   marked.use({ gfm: true, breaks: true });
 
   // ── Fetch posts.json ──────────────────────────────────────
-  fetch('posts.json')
+  fetch(`posts.json?v=${Date.now()}`)
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(data => {
       allPosts = data.map(p => ({
@@ -132,9 +132,10 @@
     postBody.innerHTML = '<p style="font-family:monospace;font-size:12px;color:#9ca3af">Loading…</p>';
 
     try {
-      const res = await fetch(post.path);
+      const res = await fetch(`${post.path}?v=${Date.now()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = (await res.text()).replace(/\r\n/g, '\n');
+      postBody.style.cssText = 'background:#ffffff;color:#000000';
       postBody.innerHTML = marked.parse(fixTableNewlines(stripFrontmatter(raw)));
       applyTableStyles(postBody);
     } catch (err) {

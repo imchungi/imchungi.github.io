@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(mkdir -p \"f:\\\\zHome\\\\githubhome\\\\imchungi.github.io\\\\tools\\\\shared\" \"f:\\\\zHome\\\\githubhome\\\\imchungi.github.io\\\\tools\\\\markdown\")",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: add markdown converter with sidebar layout *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git commit -m 'fix: fix markdown preview to light mode \\(white bg, black text\\) *)",
+      "Bash(git commit -m 'feat: copy rendered HTML as text/html ClipboardItem \\(rich paste\\) *)",
+      "Bash(git commit -m 'refactor: copy via Selection API + execCommand instead of ClipboardItem *)"
     ],
     "additionalDirectories": [
       "f:\\zHome\\githubhome\\imchungi.github.io\\tools"

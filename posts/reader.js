@@ -134,7 +134,7 @@
     try {
       const res = await fetch(post.path);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const raw = await res.text();
+      const raw = (await res.text()).replace(/\r\n/g, '\n');
       postBody.innerHTML = marked.parse(fixTableNewlines(stripFrontmatter(raw)));
       applyTableStyles(postBody);
     } catch (err) {

@@ -94,6 +94,19 @@
     });
   }
 
+  // ── Force table styles (override any Tailwind/CSS conflicts) ─
+  function applyTableStyles(root) {
+    root.querySelectorAll('table').forEach(table => {
+      table.style.cssText = 'width:100%;border-collapse:collapse;margin-bottom:1em';
+      table.querySelectorAll('th').forEach(th => {
+        th.style.cssText = 'border:1px solid #d1d5db;padding:0.5em 0.75em;background:#f3f4f6;font-weight:600;text-align:left';
+      });
+      table.querySelectorAll('td').forEach(td => {
+        td.style.cssText = 'border:1px solid #d1d5db;padding:0.5em 0.75em';
+      });
+    });
+  }
+
   // ── Strip YAML frontmatter ────────────────────────────────
   function stripFrontmatter(text) {
     if (!text.startsWith('---')) return text;
@@ -118,6 +131,7 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.text();
       postBody.innerHTML = marked.parse(stripFrontmatter(raw));
+      applyTableStyles(postBody);
     } catch (err) {
       postBody.innerHTML = `<p style="font-family:monospace;font-size:12px;color:#ef4444">파일을 불러오지 못했습니다: ${err.message}</p>`;
     }

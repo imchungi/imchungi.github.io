@@ -107,6 +107,11 @@
     });
   }
 
+  // ── Remove blank lines between table rows ────────────────
+  function fixTableNewlines(text) {
+    return text.replace(/(\|[^\n]*\n)\n+(?=\|)/g, '$1');
+  }
+
   // ── Strip YAML frontmatter ────────────────────────────────
   function stripFrontmatter(text) {
     if (!text.startsWith('---')) return text;
@@ -130,7 +135,7 @@
       const res = await fetch(post.path);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.text();
-      postBody.innerHTML = marked.parse(stripFrontmatter(raw));
+      postBody.innerHTML = marked.parse(fixTableNewlines(stripFrontmatter(raw)));
       applyTableStyles(postBody);
     } catch (err) {
       postBody.innerHTML = `<p style="font-family:monospace;font-size:12px;color:#ef4444">파일을 불러오지 못했습니다: ${err.message}</p>`;

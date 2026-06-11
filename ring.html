@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QdingBell</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; margin-bottom: 8px; text-align: center; }
+    p { color: #888; text-align: center; margin-bottom: 24px; font-size: 14px; }
+    input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px; font-family: sans-serif; }
+    textarea { height: 80px; resize: none; }
+    button { width: 100%; padding: 14px; background: #6c63ff; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:disabled { opacity: 0.6; }
+    .success { text-align: center; display: none; }
+    .success h2 { font-size: 48px; margin-bottom: 12px; }
+    .error { color: red; text-align: center; font-size: 14px; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card" id="form">
+    <h1>🔔 QdingBell</h1>
+    <p>방문자 정보를 입력하고 벨을 눌러주세요</p>
+    <input type="text" id="name" placeholder="이름 (선택사항)" />
+    <textarea id="message" placeholder="메시지 (선택사항)"></textarea>
+    <button id="btn" onclick="ring()">🔔 벨 누르기</button>
+    <p class="error" id="error">오류가 발생했어요. 다시 시도해주세요.</p>
+  </div>
+  <div class="card success" id="success">
+    <h2>🔔</h2>
+    <h3>벨을 눌렀어요!</h3>
+    <p style="margin-top:12px">잠시 후 주인이 확인할게요</p>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://sreqolclktqeaecuksxj.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+
+    const { createClient } = supabase;
+    const client = createClient('https://sreqolclktqeaecuksxj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyZXFvbGNsa3RxZWFlY3Vrc3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjIyNzEsImV4cCI6MjA5NjczODI3MX0.kAiA9yIFBQgRrayVN47S9ICLu6pOk5kuLGdv88b0Xyw');
+
+    const params = new URLSearchParams(window.location.search);
+    const doorId = params.get('door_id');
+
+    async function ring() {
+      const btn = document.getElementById('btn');
+      const errorEl = document.getElementById('error');
+      const name = document.getElementById('name').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!doorId) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = '잘못된 QR 코드예요.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '전송 중...';
+      errorEl.style.display = 'none';
+
+      const { error } = await client.from('visits').insert({
+        door_id: doorId,
+        visitor_name: name || null,
+        message: message || null,
+      });
+
+      if (error) {
+        btn.disabled = false;
+        btn.textContent = '🔔 벨 누르기';
+        errorEl.style.display = 'block';
+      } else {
+        document.getElementById('form').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

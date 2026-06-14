@@ -94,6 +94,36 @@
     });
   }
 
+  // ── Copy buttons for code blocks ─────────────────────────────
+  function addCopyButtons(root) {
+    root.querySelectorAll('pre').forEach(pre => {
+      pre.style.position = 'relative';
+
+      const btn = document.createElement('button');
+      btn.textContent = 'copy';
+      btn.style.cssText = [
+        'position:absolute;top:0.5em;right:0.5em',
+        'font-family:monospace;font-size:11px',
+        'padding:2px 8px;border-radius:4px;border:1px solid #d1d5db',
+        'background:#f3f4f6;color:#374151;cursor:pointer;opacity:0.75',
+        'transition:opacity 0.15s',
+      ].join(';');
+
+      btn.onmouseenter = () => { btn.style.opacity = '1'; };
+      btn.onmouseleave = () => { btn.style.opacity = '0.75'; };
+
+      btn.onclick = () => {
+        const code = pre.querySelector('code');
+        navigator.clipboard.writeText(code ? code.innerText : pre.innerText).then(() => {
+          btn.textContent = 'copied!';
+          setTimeout(() => { btn.textContent = 'copy'; }, 1500);
+        });
+      };
+
+      pre.appendChild(btn);
+    });
+  }
+
   // ── Force table styles (override any Tailwind/CSS conflicts) ─
   function applyTableStyles(root) {
     root.querySelectorAll('table').forEach(table => {
@@ -138,6 +168,7 @@
       postBody.style.cssText = 'background:#ffffff;color:#000000';
       postBody.innerHTML = marked.parse(fixTableNewlines(stripFrontmatter(raw)));
       applyTableStyles(postBody);
+      addCopyButtons(postBody);
     } catch (err) {
       postBody.innerHTML = `<p style="font-family:monospace;font-size:12px;color:#ef4444">파일을 불러오지 못했습니다: ${err.message}</p>`;
     }

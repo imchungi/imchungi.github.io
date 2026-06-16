@@ -1,244 +1,295 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cuckoo - 개인정보처리방침</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 — Cuckoo Pomodoro</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/assets/js/tailwind.config.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
-      background: #f9f9f9;
-      color: #222;
-      line-height: 1.8;
-      padding: 40px 20px;
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 2px,
+        rgba(0,255,127,0.015) 2px, rgba(0,255,127,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
     }
-    .container {
-      max-width: 760px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 12px;
-      padding: 48px 52px;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    /* PRIVACY watermark */
+    header::after {
+      content: 'PRIVACY';
+      position: absolute;
+      right: -0.05em;
+      bottom: -0.2em;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(5rem, 18vw, 14rem);
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(0,255,127,0.05);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
     }
-    .app-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 36px;
-      padding-bottom: 24px;
-      border-bottom: 2px solid #f0f0f0;
+    /* list bullet */
+    ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: #00FF7F;
     }
-    .app-icon {
-      font-size: 40px;
-    }
-    .app-title h1 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1a1a1a;
-    }
-    .app-title p {
-      font-size: 13px;
-      color: #888;
-      margin-top: 2px;
-    }
-    h2 {
-      font-size: 16px;
-      font-weight: 700;
-      color: #1a1a1a;
-      margin: 32px 0 12px;
-      padding-left: 12px;
-      border-left: 4px solid #FF6B35;
-    }
-    p {
-      font-size: 14px;
-      color: #444;
-      margin-bottom: 10px;
-    }
-    ul {
-      padding-left: 20px;
-      margin-bottom: 10px;
-    }
-    ul li {
-      font-size: 14px;
-      color: #444;
-      margin-bottom: 6px;
-    }
-    .highlight-box {
-      background: #fff8f5;
-      border: 1px solid #ffe0d0;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin: 12px 0;
-    }
-    .highlight-box p {
-      margin: 0;
-      font-size: 14px;
-      color: #cc4400;
-    }
-    .info-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 12px 0;
-      font-size: 14px;
-    }
-    .info-table th {
-      background: #f5f5f5;
-      padding: 10px 14px;
-      text-align: left;
-      font-weight: 600;
-      color: #333;
-      border: 1px solid #e0e0e0;
-    }
-    .info-table td {
-      padding: 10px 14px;
-      border: 1px solid #e0e0e0;
-      color: #444;
-    }
-    .footer {
-      margin-top: 48px;
-      padding-top: 24px;
-      border-top: 1px solid #f0f0f0;
-      font-size: 13px;
-      color: #999;
-    }
-    a {
-      color: #FF6B35;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .updated {
+    /* section number leading line */
+    .section-label::before {
+      content: '';
       display: inline-block;
-      background: #f0f0f0;
-      border-radius: 4px;
-      padding: 4px 10px;
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 24px;
-    }
-    @media (max-width: 600px) {
-      .container { padding: 32px 20px; }
+      width: 2rem;
+      height: 1px;
+      background: #00FF7F;
     }
   </style>
 </head>
-<body>
-  <div class="container">
+<body class="bg-bg text-content font-noto font-light leading-[1.8]">
 
-    <div class="app-header">
-      <div class="app-icon">🐦</div>
-      <div class="app-title">
-        <h1>Cuckoo</h1>
-        <p>뽀모도로 집중 타이머 · 개인정보처리방침</p>
-      </div>
-    </div>
+<nav class="px-5 sm:px-10 py-6 border-b border-line flex justify-between items-center">
+  <a class="font-barlow font-bold text-base tracking-[0.2em] text-neon no-underline" href="/index.html">IMCHUNGI</a>
+  <a class="font-barlow text-[0.8rem] tracking-[0.2em] uppercase text-muted no-underline transition-colors duration-200 hover:text-neon" href="/index.html">← 홈으로</a>
+</nav>
 
-    <span class="updated">최종 업데이트: 2026년 6월 16일</span>
+<header class="px-5 sm:px-10 pt-16 pb-12 border-b border-line relative overflow-hidden">
+  <div class="inline-block font-barlow text-[0.75rem] tracking-[0.25em] uppercase text-neon border border-neon px-[0.8em] py-[0.25em] mb-6">Legal</div>
+  <h1 class="font-barlow font-black text-[clamp(2.5rem,8vw,5rem)] uppercase tracking-[-0.02em] leading-none text-white relative z-10">
+    개인정보<br><span class="text-neon">처리방침</span>
+  </h1>
+  <p class="mt-6 text-[0.8rem] text-muted tracking-[0.1em] relative z-10">
+    Cuckoo · 최종 업데이트: 2026년 6월 16일
+    <span class="inline-block font-barlow text-[0.7rem] tracking-[0.2em] uppercase text-neon2 border border-neon2 px-[0.7em] py-[0.2em] ml-3 align-middle opacity-80">KO · EN</span>
+  </p>
+</header>
 
-    <p>
-      Cuckoo(이하 "앱")는 casapapa(이하 "개발자")가 제공하는 뽀모도로 집중 타이머 앱입니다.
-      본 개인정보처리방침은 앱 사용 중 수집되는 정보와 그 처리 방식을 안내합니다.
+<main class="max-w-[760px] mx-auto px-5 sm:px-10 pt-16 pb-24">
+
+  <div class="border border-line border-l-[3px] border-l-neon bg-card px-6 py-6 my-6">
+    <p class="text-[0.92rem] text-content leading-[1.9]">
+      본 방침은 <strong>Cuckoo</strong> 앱(이하 "앱")을 통해 수집되는 개인정보의 처리 방식을 설명합니다.
+      앱을 사용함으로써 본 방침에 동의하는 것으로 간주됩니다.
     </p>
-
-    <div class="highlight-box">
-      <p>📌 본 앱은 사용자의 개인 식별 정보(이름, 이메일, 전화번호 등)를 직접 수집하지 않습니다.</p>
-    </div>
-
-    <!-- 1 -->
-    <h2>1. 수집하는 정보</h2>
-    <p>앱은 다음과 같은 방식으로 정보를 수집합니다.</p>
-    <table class="info-table">
-      <tr>
-        <th>수집 주체</th>
-        <th>수집 항목</th>
-        <th>목적</th>
-      </tr>
-      <tr>
-        <td>Google AdMob</td>
-        <td>광고 식별자(GAID), 기기 정보, 앱 사용 패턴</td>
-        <td>맞춤형 광고 제공</td>
-      </tr>
-      <tr>
-        <td>앱 자체</td>
-        <td>집중 세션 기록, 만시간 달성 현황 (기기 내 로컬 저장)</td>
-        <td>서비스 기능 제공</td>
-      </tr>
-    </table>
-    <p>앱 자체가 수집하는 데이터(세션 기록, 만시간 달성 현황)는 <strong>서버로 전송되지 않으며 기기 내에만 저장</strong>됩니다.</p>
-
-    <!-- 2 -->
-    <h2>2. 광고 (Google AdMob)</h2>
-    <p>
-      본 앱은 Google AdMob을 통해 광고를 제공합니다.
-      AdMob은 광고 효과 측정 및 맞춤 광고 제공을 위해 광고 식별자(GAID) 등을 자동으로 수집할 수 있습니다.
+    <p class="text-[0.85rem] text-muted leading-[1.8] mt-3 pl-4 border-l border-line">
+      This policy describes how <strong>Cuckoo</strong> (the "App") handles information collected through its use.
+      By using the App, you agree to this policy.
     </p>
-    <ul>
-      <li>Google 개인정보처리방침: <a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></li>
-      <li>광고 설정 및 맞춤 광고 거부: <a href="https://adssettings.google.com" target="_blank">adssettings.google.com</a></li>
-    </ul>
-    <p>토마토 후원(인앱 결제)을 통해 광고를 제거하면 AdMob의 데이터 수집이 중단됩니다.</p>
-
-    <!-- 3 -->
-    <h2>3. 인앱 결제</h2>
-    <p>
-      앱은 Google Play 인앱 결제를 통해 토마토 후원(광고 제거) 기능을 제공합니다.
-      결제 정보는 Google Play에서 처리되며, 개발자는 카드 번호 등 결제 상세 정보에 접근할 수 없습니다.
-    </p>
-
-    <!-- 4 -->
-    <h2>4. 기기 권한</h2>
-    <ul>
-      <li><strong>알림 권한</strong> — 집중/휴식 전환 및 정각 알림 제공 목적</li>
-      <li><strong>저장소 권한</strong> — 인스타그램 공유용 이미지 저장 목적 (Android 버전에 따라 상이)</li>
-    </ul>
-    <p>권한은 해당 기능 사용 시에만 요청되며, 거부해도 기본 타이머 기능은 정상 작동합니다.</p>
-
-    <!-- 5 -->
-    <h2>5. 제3자 제공</h2>
-    <p>개발자는 사용자 정보를 제3자에게 판매하거나 임의로 제공하지 않습니다. 단, 다음의 경우는 예외입니다.</p>
-    <ul>
-      <li>법령에 의한 요구가 있는 경우</li>
-      <li>Google AdMob 등 서비스 운영에 필요한 제휴사 (위 2항 참조)</li>
-    </ul>
-
-    <!-- 6 -->
-    <h2>6. 데이터 보관 및 삭제</h2>
-    <p>
-      앱 내 저장 데이터(세션 기록, 만시간 달성 현황)는 기기에만 저장됩니다.
-      앱을 삭제하면 해당 데이터는 완전히 삭제됩니다.
-      AdMob 관련 데이터는 Google의 정책에 따라 관리됩니다.
-    </p>
-
-    <!-- 7 -->
-    <h2>7. 아동 개인정보 보호</h2>
-    <p>
-      본 앱은 만 14세 미만 아동을 대상으로 하지 않습니다.
-      만 14세 미만 아동의 개인정보를 고의로 수집하지 않으며,
-      해당 사실이 확인될 경우 즉시 삭제 조치합니다.
-    </p>
-
-    <!-- 8 -->
-    <h2>8. 개인정보처리방침 변경</h2>
-    <p>
-      본 방침은 법령 또는 서비스 변경에 따라 업데이트될 수 있습니다.
-      변경 시 본 페이지를 통해 공지하며, 계속 사용하시면 변경 내용에 동의한 것으로 간주합니다.
-    </p>
-
-    <!-- 9 -->
-    <h2>9. 문의</h2>
-    <p>개인정보 관련 문의는 아래로 연락해 주세요.</p>
-    <ul>
-      <li>개발자: casapapa</li>
-      <li>이메일: <a href="mailto:imchungi@gmail.com">imchungi@gmail.com</a></li>
-      <li>홈페이지: <a href="https://imchungi.github.io" target="_blank">imchungi.github.io</a></li>
-    </ul>
-
-    <div class="footer">
-      <p>© 2026 casapapa · Cuckoo App · All rights reserved.</p>
-      <p style="margin-top:6px;">본 문서는 <a href="https://imchungi.github.io/cuckoo/privacy.html">imchungi.github.io/cuckoo/privacy.html</a> 에서 확인할 수 있습니다.</p>
-    </div>
-
   </div>
+
+  <!-- 01 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">01</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">수집하는 정보 · Information We Collect</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 다음과 같은 정보를 수집할 수 있습니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">The App may collect the following information.</p>
+    <ul class="list-none mt-2 mb-3 space-y-2">
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        광고 식별자 (Google AdMob 광고 제공 목적)
+        <span class="block text-[0.82rem] text-muted">Advertising identifier (for Google AdMob ads)</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        인앱결제 영수증 정보 (광고 제거 구매, Google Play 처리)
+        <span class="block text-[0.82rem] text-muted">In-app purchase receipt (ad removal purchase, processed by Google Play)</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        앱 사용 통계 (익명 충돌 보고 등)
+        <span class="block text-[0.82rem] text-muted">App usage statistics (e.g., anonymous crash reports)</span>
+      </li>
+    </ul>
+    <div class="border border-line border-l-[3px] border-l-neon bg-card px-6 py-6 my-6">
+      <p class="text-[0.92rem] text-content leading-[1.9]">
+        집중 세션 기록 및 만시간 달성 현황은 <strong>기기 내에만 저장</strong>되며 서버로 전송되지 않습니다.
+        이름, 이메일 주소 등 개인 식별 정보는 수집하지 않습니다.
+      </p>
+      <p class="text-[0.85rem] text-muted leading-[1.8] mt-3 pl-4 border-l border-line">
+        Focus session records and 10,000-hour progress are stored <strong>locally on device only</strong> and are never sent to a server.
+        No personally identifiable information such as name or email address is collected.
+      </p>
+    </div>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 02 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">02</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">정보의 이용 목적 · Purpose of Use</h2>
+    <ul class="list-none mt-2 mb-3 space-y-2">
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        광고 표시 및 광고 성과 측정 (AdMob)
+        <span class="block text-[0.82rem] text-muted">Displaying ads and measuring ad performance (AdMob)</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        인앱결제 처리 및 광고 제거 기능 잠금 해제 확인
+        <span class="block text-[0.82rem] text-muted">Processing in-app purchases and verifying ad removal unlock</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        앱 안정성 개선 및 오류 수정
+        <span class="block text-[0.82rem] text-muted">Improving app stability and fixing errors</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        사용자 문의 응대
+        <span class="block text-[0.82rem] text-muted">Responding to user inquiries</span>
+      </li>
+    </ul>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 03 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">03</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">광고 · Advertising</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 Google AdMob을 통해 광고를 표시합니다. AdMob은 더 관련성 높은 광고를 제공하기 위해 광고 식별자를 사용할 수 있습니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">The App displays ads via Google AdMob. AdMob may use your advertising identifier to serve more relevant ads.</p>
+    <ul class="list-none mt-2 mb-3">
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        <strong>Google AdMob 개인정보처리방침</strong>:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="text-neon">policies.google.com/privacy</a>
+        <span class="block text-[0.82rem] text-muted">Google AdMob Privacy Policy</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative mt-2">
+        <strong>맞춤 광고 설정 변경</strong>:
+        <a href="https://adssettings.google.com" target="_blank" rel="noopener" class="text-neon">adssettings.google.com</a>
+        <span class="block text-[0.82rem] text-muted">Manage personalized ad settings</span>
+      </li>
+    </ul>
+    <div class="border border-line border-l-[3px] border-l-neon bg-card px-6 py-6 my-6">
+      <p class="text-[0.92rem] text-content leading-[1.9]">
+        앱 내에서 <strong>토마토 후원</strong>(광고 제거) 구매를 완료하면 광고가 영구적으로 비활성화되며, 이후 AdMob을 통한 광고 식별자 수집도 중단됩니다.
+      </p>
+      <p class="text-[0.85rem] text-muted leading-[1.8] mt-3 pl-4 border-l border-line">
+        Completing the <strong>Tomato Support</strong> (Remove Ads) purchase permanently disables all ads, after which AdMob will no longer collect your advertising identifier through the App.
+      </p>
+    </div>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 04 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">04</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">인앱결제 · In-App Purchase</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 광고 제거를 위한 <strong>토마토 후원</strong> 인앱결제를 제공합니다. 구독 상품은 없습니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">The App offers a <strong>Tomato Support</strong> in-app purchase to remove ads. There are no subscription products.</p>
+    <div class="border border-line border-l-[3px] border-l-neon bg-card px-6 py-6 my-6">
+      <p class="text-[0.92rem] text-content leading-[1.9]">
+        결제는 <strong>Google Play</strong>에서 직접 처리합니다. 앱 개발자는 카드 번호 등 결제 세부 정보에 접근하지 않습니다.
+        환불은 Google Play 정책에 따릅니다.
+      </p>
+      <p class="text-[0.85rem] text-muted leading-[1.8] mt-3 pl-4 border-l border-line">
+        Payments are processed directly by <strong>Google Play</strong>. The developer does not access payment details such as card numbers.
+        Refunds are subject to Google Play's refund policy.
+      </p>
+    </div>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 05 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">05</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">기기 권한 · Device Permissions</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 다음 기기 권한을 요청할 수 있습니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">The App may request the following device permissions.</p>
+    <ul class="list-none mt-2 mb-3 space-y-2">
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        <strong>알림 권한</strong> — 집중/휴식 전환 및 정각 알림 제공 목적
+        <span class="block text-[0.82rem] text-muted">Notification permission — for focus/break transitions and interval alerts</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        <strong>저장소 권한</strong> — 생성된 인스타그램 공유 이미지를 갤러리에 저장하는 목적 (Android 버전에 따라 상이)
+        <span class="block text-[0.82rem] text-muted">Storage permission — for saving generated Instagram-share images to the gallery (varies by Android version)</span>
+      </li>
+    </ul>
+    <p class="text-[0.92rem] text-content leading-[1.9] mt-4">권한은 해당 기능 사용 시에만 요청되며, 거부해도 기본 타이머 기능은 정상 작동합니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] pl-4 border-l border-line mt-2">Permissions are requested only when the related feature is used. Denying a permission does not affect the core timer functionality.</p>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 06 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">06</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">제3자 서비스 · Third-Party Services</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 다음 제3자 서비스를 사용하며, 각 서비스의 개인정보처리방침이 적용됩니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">The App uses the following third-party services, each governed by their own privacy policy.</p>
+    <ul class="list-none mt-2 mb-3 space-y-2">
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        <strong>Google AdMob</strong> — 광고 서비스
+        <span class="block text-[0.82rem] text-muted">Advertising service</span>
+      </li>
+      <li class="text-[0.92rem] text-content leading-[1.9] pl-5 relative">
+        <strong>Google Play Billing</strong> — 인앱결제 처리
+        <span class="block text-[0.82rem] text-muted">In-app purchase processing</span>
+      </li>
+    </ul>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 07 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">07</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">데이터 보관 및 삭제 · Data Retention &amp; Deletion</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 서버에 사용자 데이터를 저장하지 않습니다. 앱을 삭제하면 기기에 저장된 모든 집중 세션 기록 및 설정 데이터가 함께 삭제됩니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-3 pl-4 border-l border-line">The App does not store user data on any server. Uninstalling the App removes all locally stored focus session records and settings.</p>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">데이터 관련 문의는 아래 연락처로 요청하시면 처리해 드립니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] pl-4 border-l border-line">For any data-related inquiries, please contact us at the address below.</p>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 08 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">08</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">아동 개인정보 · Children's Privacy</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">앱은 만 14세 미만 아동을 대상으로 하지 않습니다. 만 14세 미만 아동의 개인정보가 수집된 사실을 인지하는 경우 즉시 삭제 조치합니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] pl-4 border-l border-line">The App is not directed at children under the age of 14. If we become aware that personal information from a child under 14 has been collected, we will delete it immediately.</p>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 09 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">09</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">개인정보 보호책임자 · Contact</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">개인정보 처리에 관한 문의사항은 아래로 연락주십시오.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] mb-5 pl-4 border-l border-line">For inquiries regarding personal information, please contact us below.</p>
+    <div class="border border-line border-l-[3px] border-l-neon bg-card px-6 py-6 my-6">
+      <p class="text-[0.92rem] text-content leading-[1.9]">
+        개발자 · Developer: casapapa<br>
+        위치 · Location: 강원특별자치도 태백시, Republic of Korea<br>
+        이메일 · Email: <a href="mailto:imchungi@gmail.com" class="text-neon">imchungi@gmail.com</a>
+      </p>
+    </div>
+  </div>
+
+  <hr class="border-0 border-t border-line my-12" />
+
+  <!-- 10 -->
+  <div class="mb-14">
+    <div class="section-label font-barlow text-[0.7rem] tracking-[0.3em] uppercase text-neon mb-4 flex items-center gap-3">10</div>
+    <h2 class="font-barlow font-bold text-2xl uppercase tracking-[0.05em] text-white mb-4">방침 변경 · Policy Updates</h2>
+    <p class="text-[0.92rem] text-content leading-[1.9] mb-3">본 개인정보처리방침은 법령 또는 서비스 변경에 따라 수정될 수 있습니다. 변경 시 본 페이지를 통해 공지합니다.</p>
+    <p class="text-[0.85rem] text-muted leading-[1.8] pl-4 border-l border-line">This privacy policy may be updated in response to legal changes or service modifications. Any changes will be announced on this page.</p>
+  </div>
+
+</main>
+
+<footer class="border-t border-line px-5 sm:px-10 py-8 flex justify-between items-center flex-wrap gap-4">
+  <p class="text-xs text-muted tracking-[0.1em]">© 2026 casapapa · Cuckoo App</p>
+  <a class="text-neon no-underline text-xs" href="/index.html">← 홈으로</a>
+</footer>
+
 </body>
 </html>

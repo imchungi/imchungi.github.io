@@ -96,7 +96,6 @@
             transform: none;
         }
 
-        /* 로딩 스피너 */
         .spinner {
             display: none;
             text-align: center;
@@ -138,7 +137,6 @@
             }
         }
 
-        /* 결과 영역 */
         .result {
             display: none;
             margin-top: 20px;
@@ -221,7 +219,6 @@
             word-break: break-word;
         }
 
-        /* 에러 메시지 */
         .error {
             display: none;
             background: #2a0a0a;
@@ -236,7 +233,6 @@
             display: block;
         }
 
-        /* 예시 URL */
         .examples {
             margin-top: 12px;
             font-size: 13px;
@@ -254,7 +250,16 @@
             color: #ff6b6b;
         }
 
-        /* 반응형 */
+        .status-badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: #2a2a2a;
+            color: #888;
+            margin-left: 8px;
+        }
+
         @media (max-width: 600px) {
             .input-group button {
                 width: 100%;
@@ -274,7 +279,7 @@
         <p class="subtitle">YouTube URL을 입력하면 자막을 보여줍니다</p>
 
         <div class="input-group">
-            <input type="text" id="urlInput" placeholder="YouTube URL 또는 비디오 ID를 입력하세요 (예: dQw4w9WgXcQ)" />
+            <input type="text" id="urlInput" placeholder="YouTube URL 또는 비디오 ID (예: dQw4w9WgXcQ)" />
             <button id="fetchBtn">자막 가져오기</button>
         </div>
 
@@ -282,19 +287,17 @@
             💡 예시: 
             <a onclick="setExample('dQw4w9WgXcQ')">dQw4w9WgXcQ</a>, 
             <a onclick="setExample('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">전체 URL</a>
+            <span class="status-badge" id="apiStatus">🔍 API: 프록시</span>
         </div>
 
-        <!-- 로딩 -->
         <div class="spinner" id="spinner">
             <div class="dot"></div>
             <div class="dot"></div>
             <div class="dot"></div>
         </div>
 
-        <!-- 에러 -->
         <div class="error" id="error"></div>
 
-        <!-- 결과 -->
         <div class="result" id="result">
             <div class="info">
                 <span class="title" id="videoTitle">제목을 불러오는 중...</span>
@@ -311,12 +314,10 @@
         function extractVideoId(url) {
             if (!url) return null;
 
-            // 이미 비디오 ID인 경우 (11자)
             if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) {
                 return url.trim();
             }
 
-            // 다양한 YouTube URL 패턴
             const patterns = [
                 /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
                 /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
@@ -332,41 +333,135 @@
         }
 
         // ============================================================
-        // 2. 자막을 가져오는 API (공개 프록시 사용)
-        //    ※ 참고: https://yt-api.com/  (무료 공개 API, 요청 제한 있음)
+        // 2. CORS 프록시를 통한 YouTube 자막 가져오기
         // ============================================================
         async function fetchTranscript(videoId) {
-            // 공개 API 사용 (CORS 지원)
-            const apiUrl = `https://yt-api.com/api/transcripts?videoId=${videoId}`;
+            // 방법 1: yt-api.com (CORS 지원)
+            try {
+                const apiUrl = `https://yt-api.com/api/transcripts?videoId=${videoId}`;
+                const response = await fetch(apiUrl, {
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Accept': 'application/json'
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.transcripts && data.transcripts.length > 0) {
+                        const transcript = data.transcripts[0];
+                        return {
+                            title: data.title || '제목 없음',
+                            items: transcript.snippets || transcript.items || []
+                        };
+                    }
                 }
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API 오류 (${response.status}): ${errorText}`);
+            } catch (e) {
+                console.log('yt-api.com 실패, 다음 방법 시도...');
             }
 
-            const data = await response.json();
-
-            // API 응답 구조 확인
-            if (!data.transcripts || data.transcripts.length === 0) {
-                throw new Error('이 비디오에는 자막이 없거나 접근할 수 없습니다.');
+            // 방법 2: CORS 프록시 + YouTube API (더 안정적)
+            try {
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                
+                const response = await fetch(proxyUrl + encodeURIComponent(youtubeUrl));
+                if (!response.ok) throw new Error('프록시 요청 실패');
+                
+                const html = await response.text();
+                
+                // YouTube 페이지에서 자막 데이터 추출
+                const captionsData = extractCaptionsFromHTML(html);
+                if (captionsData) {
+                    return captionsData;
+                }
+                
+                throw new Error('자막 데이터를 찾을 수 없습니다.');
+            } catch (e) {
+                console.log('프록시 방법 실패:', e);
+                throw new Error('자막을 불러올 수 없습니다. (자막이 없거나 API 제한에 걸렸을 수 있습니다)');
             }
-
-            // 첫 번째 자막 트랙 사용 (보통 영어 또는 원본)
-            const transcript = data.transcripts[0];
-            return {
-                title: data.title || '제목 없음',
-                items: transcript.snippets || transcript.items || []
-            };
         }
 
         // ============================================================
-        // 3. UI 제어
+        // 3. YouTube HTML에서 자막 데이터 추출
+        // ============================================================
+        function extractCaptionsFromHTML(html) {
+            try {
+                // 1) ytInitialPlayerResponse 찾기
+                const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({.+?});/);
+                if (!playerResponseMatch) {
+                    // 다른 패턴 시도
+                    const altMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
+                    if (!altMatch) return null;
+                    var data = JSON.parse(altMatch[1]);
+                } else {
+                    var data = JSON.parse(playerResponseMatch[1]);
+                }
+
+                // 2) 자막 트랙 찾기
+                const captions = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+                if (!captions || captions.length === 0) return null;
+
+                // 3) 첫 번째 자막 트랙 사용 (보통 영어 또는 한국어)
+                const track = captions[0];
+                const baseUrl = track.baseUrl;
+
+                // 4) 자막 데이터 가져오기 (프록시 사용)
+                return fetchSubtitleData(baseUrl, track.name?.simpleText || '자막');
+            } catch (e) {
+                console.error('HTML 파싱 오류:', e);
+                return null;
+            }
+        }
+
+        // ============================================================
+        // 4. 자막 XML/JSON 데이터 가져오기
+        // ============================================================
+        async function fetchSubtitleData(baseUrl, trackName) {
+            try {
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const response = await fetch(proxyUrl + encodeURIComponent(baseUrl));
+                
+                if (!response.ok) throw new Error('자막 데이터를 가져올 수 없습니다.');
+                
+                const data = await response.text();
+                
+                // XML 파싱 (자막은 보통 XML 형식)
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data, 'text/xml');
+                
+                const items = [];
+                const textNodes = xmlDoc.getElementsByTagName('text');
+                
+                for (let i = 0; i < textNodes.length; i++) {
+                    const node = textNodes[i];
+                    const start = parseFloat(node.getAttribute('start') || 0);
+                    const dur = parseFloat(node.getAttribute('dur') || 0);
+                    const text = node.textContent || '';
+                    
+                    if (text.trim()) {
+                        items.push({
+                            start: start,
+                            duration: dur,
+                            text: text.trim()
+                        });
+                    }
+                }
+                
+                if (items.length === 0) {
+                    throw new Error('자막 내용이 비어있습니다.');
+                }
+                
+                return {
+                    title: trackName || 'YouTube 자막',
+                    items: items
+                };
+            } catch (e) {
+                console.error('자막 데이터 파싱 오류:', e);
+                throw new Error('자막 데이터를 파싱할 수 없습니다.');
+            }
+        }
+
+        // ============================================================
+        // 5. UI 제어
         // ============================================================
         const urlInput = document.getElementById('urlInput');
         const fetchBtn = document.getElementById('fetchBtn');
@@ -376,14 +471,13 @@
         const videoTitle = document.getElementById('videoTitle');
         const transcriptCount = document.getElementById('transcriptCount');
         const transcriptBox = document.getElementById('transcriptBox');
+        const apiStatus = document.getElementById('apiStatus');
 
-        // 예시 URL 설정
         function setExample(url) {
             urlInput.value = url;
             fetchTranscriptHandler();
         }
 
-        // 시간 포맷 (초 -> HH:MM:SS)
         function formatTime(seconds) {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
@@ -394,7 +488,6 @@
             return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
 
-        // 자막 표시
         function displayTranscript(title, items) {
             videoTitle.textContent = title || '제목 없음';
             transcriptCount.textContent = `자막 수: ${items.length}`;
@@ -418,7 +511,6 @@
             transcriptBox.innerHTML = html;
         }
 
-        // 에러 표시
         function showError(message) {
             error.textContent = `⚠️ ${message}`;
             error.classList.add('active');
@@ -428,7 +520,6 @@
             error.classList.remove('active');
         }
 
-        // 로딩 상태
         function setLoading(isLoading) {
             if (isLoading) {
                 spinner.classList.add('active');
@@ -436,14 +527,18 @@
                 fetchBtn.textContent = '가져오는 중...';
                 result.classList.remove('active');
                 hideError();
+                apiStatus.textContent = '⏳ 로딩 중...';
             } else {
                 spinner.classList.remove('active');
                 fetchBtn.disabled = false;
                 fetchBtn.textContent = '자막 가져오기';
+                apiStatus.textContent = '✅ 완료';
             }
         }
 
-        // 메인 핸들러
+        // ============================================================
+        // 6. 메인 핸들러
+        // ============================================================
         async function fetchTranscriptHandler() {
             const input = urlInput.value.trim();
             if (!input) {
@@ -465,15 +560,19 @@
                 const data = await fetchTranscript(videoId);
                 displayTranscript(data.title, data.items);
                 result.classList.add('active');
+                apiStatus.textContent = '✅ 자막 로드 성공';
             } catch (err) {
                 showError(err.message || '자막을 불러오는 중 오류가 발생했습니다.');
                 result.classList.remove('active');
+                apiStatus.textContent = '❌ 오류 발생';
             } finally {
                 setLoading(false);
             }
         }
 
-        // 이벤트 바인딩
+        // ============================================================
+        // 7. 이벤트 바인딩
+        // ============================================================
         fetchBtn.addEventListener('click', fetchTranscriptHandler);
 
         urlInput.addEventListener('keydown', (e) => {
@@ -482,12 +581,11 @@
             }
         });
 
-        // 페이지 로드 시 포커스
         window.addEventListener('load', () => {
             urlInput.focus();
+            apiStatus.textContent = '🔍 API: 프록시 + YouTube';
         });
 
-        // 전역에 함수 노출 (예시 링크용)
         window.setExample = setExample;
     </script>
 </body>

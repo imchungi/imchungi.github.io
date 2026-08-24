@@ -38,40 +38,32 @@
     background:#fff; color:#000;
   }
 
-  /* ---------- 화면 1: 목록 ---------- */
   #listScreen .topbar{ justify-content:space-between; }
   #listScreen .topbar .left{ display:flex; gap:8px; align-items:center; }
   .status-line{ padding:8px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid #ccc; flex-shrink:0; }
   .file-list{ flex:1; overflow-y:auto; margin:0; padding:0; list-style:none; }
-  .file-list li{
-    padding:16px 16px; border-bottom:1px solid #ccc;
-    font-size:16px; cursor:pointer;
-  }
+  .file-list li{ padding:16px 16px; border-bottom:1px solid #ccc; font-size:16px; cursor:pointer; }
   .file-list li .fname{ display:block; word-break:break-all; }
   .file-list li .fdate{ display:block; color:var(--muted); font-size:12px; margin-top:4px; }
   .list-empty{ padding:40px 20px; color:var(--muted); font-size:15px; line-height:1.6; text-align:center; }
 
-  /* ---------- 화면 2: 리더 ---------- */
   #readerScreen .topbar{ justify-content:space-between; }
   #readerScreen .title{ font-weight:bold; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin:0 8px; text-align:center; }
   .font-ctrl{ display:flex; gap:4px; flex-shrink:0; }
   .font-ctrl button{ width:34px; height:34px; font-size:14px; border:2px solid var(--border); background:#fff; }
 
   .page-viewport{ flex:1; overflow:hidden; position:relative; border-bottom:2px solid var(--border); }
-  .page-content{
-    /* display:inline-block = shrink-to-fit. 폭을 고정하지 않아야
-       브라우저가 문서 전체를 담을 만큼 컬럼을 옆으로 계속 늘려준다.
-       (폭을 고정하면 그 좁은 박스 안에 전체 문서를 욱여넣어버림 -> 압축/겹침 버그) */
-    display:inline-block; vertical-align:top;
-    height:100%; column-gap:0; padding:24px 22px;
-    font-size:var(--font-size); line-height:var(--line-h);
-  }
-  .page-content h1,.page-content h2,.page-content h3{ break-after:avoid; break-inside:avoid; }
-  .page-content pre, .page-content table, .page-content blockquote, .page-content img{ break-inside:avoid; }
-  .page-content pre{ white-space:pre-wrap; border:1px solid #999; padding:8px; font-size:.85em; }
-  .page-content img{ max-width:100%; }
-  .page-content table{ border-collapse:collapse; width:100%; }
-  .page-content table td, .page-content table th{ border:1px solid #999; padding:4px 6px; }
+
+  .md-body{ padding:24px 22px; font-size:var(--font-size); line-height:var(--line-h); }
+  .md-body h1,.md-body h2,.md-body h3{ margin-top:.2em; }
+  .md-body pre{ white-space:pre-wrap; border:1px solid #999; padding:8px; font-size:.85em; }
+  .md-body img{ max-width:100%; display:block; }
+  .md-body table{ border-collapse:collapse; width:100%; }
+  .md-body table td, .md-body table th{ border:1px solid #999; padding:4px 6px; }
+
+  .page-content{ height:100%; overflow:hidden; }
+
+  #measureBox{ position:fixed; top:0; left:-99999px; visibility:hidden; height:auto; }
 
   .nav-bar{ padding:10px 12px; display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .nav-bar button{ font-size:15px; padding:9px 14px; border:2px solid var(--border); background:#fff; }
@@ -82,7 +74,6 @@
 </head>
 <body>
 
-<!-- ============ 화면 1: 목록 ============ -->
 <div class="screen active" id="listScreen">
   <div class="topbar">
     <div class="left">
@@ -97,7 +88,6 @@
   <ul class="file-list" id="fileList"></ul>
 </div>
 
-<!-- ============ 화면 2: 리더 ============ -->
 <div class="screen" id="readerScreen">
   <div class="topbar">
     <button class="btn" id="backBtn">◀ 목록</button>
@@ -108,7 +98,7 @@
     </div>
   </div>
   <div class="page-viewport" id="pageViewport">
-    <div class="page-content" id="pageContent"></div>
+    <div class="page-content md-body" id="pageContent"></div>
   </div>
   <div class="nav-bar">
     <button id="prevBtn" disabled>◀</button>
@@ -118,13 +108,14 @@
   </div>
 </div>
 
+<div class="md-body" id="measureBox"></div>
+
 <script>
 (function(){
   "use strict";
 
   const md = window.markdownit({ html:false, linkify:false, typographer:false });
 
-  // ---------- DOM ----------
   const listScreen = document.getElementById('listScreen');
   const readerScreen = document.getElementById('readerScreen');
   const openFolderBtn = document.getElementById('openFolderBtn');
@@ -135,6 +126,7 @@
   const fileTitleEl = document.getElementById('fileTitle');
   const pageViewport = document.getElementById('pageViewport');
   const pageContentEl = document.getElementById('pageContent');
+  const measureBox = document.getElementById('measureBox');
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   const pageSlider = document.getElementById('pageSlider');
@@ -145,15 +137,15 @@
   let files = [];
   let dirHandle = null;
   let currentFile = null;
+  let currentRawHtml = '';
+  let pages = [''];
   let currentPage = 1;
   let totalPages = 1;
-  let pageStepPx = 0; // 실제 측정된 컬럼 1개당 폭(px). 매 이동마다 재측정하지 않고 고정 사용 -> 드리프트 방지
   let fontSize = 19;
 
   const LAST_FILE_KEY = 'md-eink-viewer:lastfile';
   const POS_KEY = 'md-eink-viewer:lastpos';
 
-  // ---------- IndexedDB: 폴더 핸들 기억 ----------
   function idbOpen(){
     return new Promise((resolve, reject) => {
       const req = indexedDB.open('md-eink-viewer', 1);
@@ -181,7 +173,6 @@
     });
   }
 
-  // ---------- 부팅: 기억된 폴더 자동 로드 ----------
   (async function boot(){
     if (!window.showDirectoryPicker){
       statusLine.textContent = '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge에서 열어주세요.';
@@ -198,8 +189,8 @@
           return;
         }
       }
-    }catch(e){ /* 무시하고 빈 목록 표시 */ }
-    statusLine.textContent = '오른쪽 "📁 파일 열기"로 md 폴더를 선택하세요.';
+    }catch(e){}
+    statusLine.textContent = '오른쪽 "파일 열기"로 md 폴더를 선택하세요.';
   })();
 
   openFolderBtn.addEventListener('click', async () => {
@@ -263,14 +254,12 @@
     if (match) openFile(match);
   }
 
-  // ---------- 화면 전환 ----------
   function showScreen(name){
     listScreen.classList.toggle('active', name === 'list');
     readerScreen.classList.toggle('active', name === 'reader');
   }
   backBtn.addEventListener('click', () => showScreen('list'));
 
-  // ---------- 파일 열기 (리더 화면으로 전환) ----------
   async function openFile(f){
     currentFile = f;
     localStorage.setItem(LAST_FILE_KEY, f.name);
@@ -279,12 +268,11 @@
 
     const file = await f.handle.getFile();
     const text = await file.text();
-    pageContentEl.innerHTML = md.render(text);
+    currentRawHtml = md.render(text);
 
     paginate({ restoreFromRatio:true });
   }
 
-  // ---------- 페이지네이션 ----------
   function loadPositions(){
     try{ return JSON.parse(localStorage.getItem(POS_KEY) || '{}'); }catch(e){ return {}; }
   }
@@ -294,45 +282,63 @@
     localStorage.setItem(POS_KEY, JSON.stringify(pos));
   }
 
+  function computePages(){
+    const viewportWidth = pageViewport.clientWidth;
+    const viewportHeight = pageViewport.clientHeight;
+    if (viewportWidth <= 0 || viewportHeight <= 0) return [''];
+
+    measureBox.style.width = viewportWidth + 'px';
+    measureBox.innerHTML = currentRawHtml;
+
+    const children = Array.from(measureBox.children);
+    if (children.length === 0){ measureBox.innerHTML=''; return ['']; }
+
+    const result = [];
+    let pageNodes = [];
+    let pageStartTop = children[0].offsetTop;
+
+    children.forEach(child => {
+      const bottom = child.offsetTop + child.offsetHeight;
+      const wouldExceed = (bottom - pageStartTop) > viewportHeight;
+      if (pageNodes.length > 0 && wouldExceed){
+        result.push(pageNodes.map(n => n.outerHTML).join(''));
+        pageNodes = [child];
+        pageStartTop = child.offsetTop;
+      } else {
+        pageNodes.push(child);
+      }
+    });
+    if (pageNodes.length) result.push(pageNodes.map(n => n.outerHTML).join(''));
+
+    measureBox.innerHTML = '';
+    return result.length ? result : [''];
+  }
+
   function paginate(opts){
     opts = opts || {};
-    const viewportWidth = pageViewport.clientWidth;
-    if (viewportWidth <= 0) return;
+    pages = computePages();
+    totalPages = pages.length;
 
-    pageContentEl.style.transform = 'translateX(0px)';
-    pageContentEl.style.columnWidth = viewportWidth + 'px';
-    // width는 절대 고정하지 않는다 (inline-block shrink-to-fit이 알아서 넓힘)
+    let targetPage = currentPage;
+    if (opts.restoreFromRatio){
+      const pos = loadPositions();
+      const ratio = pos[currentFile.name];
+      targetPage = ratio ? Math.max(1, Math.min(totalPages, Math.round(ratio * totalPages))) : 1;
+    }
+    targetPage = Math.max(1, Math.min(totalPages, targetPage));
 
-    // 레이아웃이 완전히 자리잡을 시간을 주기 위해 2프레임 대기
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const scrollW = pageContentEl.scrollWidth;
-        totalPages = Math.max(1, Math.round(scrollW / viewportWidth));
-        // 실제 컬럼 1개당 정확한 폭 (반올림 오차를 여기서 흡수)
-        pageStepPx = scrollW / totalPages;
+    pageSlider.min = 1;
+    pageSlider.max = totalPages;
+    pageSlider.disabled = totalPages <= 1;
 
-        let targetPage = currentPage;
-        if (opts.restoreFromRatio){
-          const pos = loadPositions();
-          const ratio = pos[currentFile.name];
-          targetPage = ratio ? Math.max(1, Math.min(totalPages, Math.round(ratio * totalPages))) : 1;
-        }
-        targetPage = Math.max(1, Math.min(totalPages, targetPage));
-
-        pageSlider.min = 1;
-        pageSlider.max = totalPages;
-        pageSlider.disabled = totalPages <= 1;
-
-        goToPage(targetPage, { save:false });
-      });
-    });
+    goToPage(targetPage, { save:false });
   }
 
   function goToPage(n, opts){
     opts = opts || {};
     n = Math.max(1, Math.min(totalPages, n));
     currentPage = n;
-    pageContentEl.style.transform = 'translateX(-' + ((n-1) * pageStepPx) + 'px)';
+    pageContentEl.innerHTML = pages[n-1];
 
     pageSlider.value = n;
     pageIndicator.textContent = n + ' / ' + totalPages;

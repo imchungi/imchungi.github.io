@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>MD 뷰어 (e잉크 6인치용)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+<style>
+  :root{
+    --border:#000; --bg:#fff; --fg:#000; --muted:#555;
+    --font-size:19px; --line-h:1.65;
+  }
+  *{ box-sizing:border-box; }
+  *{ transition:none !important; animation:none !important; scroll-behavior:auto !important; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg); color:var(--fg);
+    font-family:-apple-system, "Noto Sans KR", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing:none;
+  }
+  .screen{ display:none; flex-direction:column; height:100vh; }
+  .screen.active{ display:flex; }
+
+  .topbar{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 12px; border-bottom:2px solid var(--border);
+    flex-shrink:0;
+  }
+  .btn{
+    font-size:15px; padding:9px 12px;
+    background:#fff; color:#000; border:2px solid var(--border);
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{ background:#000; color:#fff; }
+  .btn:disabled{ opacity:.4; }
+  select{
+    font-size:14px; padding:9px 8px; border:2px solid var(--border);
+    background:#fff; color:#000;
+  }
+
+  /* ---------- 화면 1: 목록 ---------- */
+  #listScreen .topbar{ justify-content:space-between; }
+  #listScreen .topbar .left{ display:flex; gap:8px; align-items:center; }
+  .status-line{ padding:8px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid #ccc; flex-shrink:0; }
+  .file-list{ flex:1; overflow-y:auto; margin:0; padding:0; list-style:none; }
+  .file-list li{
+    padding:16px 16px; border-bottom:1px solid #ccc;
+    font-size:16px; cursor:pointer;
+  }
+  .file-list li .fname{ display:block; word-break:break-all; }
+  .file-list li .fdate{ display:block; color:var(--muted); font-size:12px; margin-top:4px; }
+  .list-empty{ padding:40px 20px; color:var(--muted); font-size:15px; line-height:1.6; text-align:center; }
+
+  /* ---------- 화면 2: 리더 ---------- */
+  #readerScreen .topbar{ justify-content:space-between; }
+  #readerScreen .title{ font-weight:bold; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; margin:0 8px; text-align:center; }
+  .font-ctrl{ display:flex; gap:4px; flex-shrink:0; }
+  .font-ctrl button{ width:34px; height:34px; font-size:14px; border:2px solid var(--border); background:#fff; }
+
+  .page-viewport{ flex:1; overflow:hidden; position:relative; border-bottom:2px solid var(--border); }
+  .page-content{
+    height:100%; column-gap:0; padding:24px 22px;
+    font-size:var(--font-size); line-height:var(--line-h);
+  }
+  .page-content h1,.page-content h2,.page-content h3{ break-after:avoid; break-inside:avoid; }
+  .page-content pre, .page-content table, .page-content blockquote, .page-content img{ break-inside:avoid; }
+  .page-content pre{ white-space:pre-wrap; border:1px solid #999; padding:8px; font-size:.85em; }
+  .page-content img{ max-width:100%; }
+  .page-content table{ border-collapse:collapse; width:100%; }
+  .page-content table td, .page-content table th{ border:1px solid #999; padding:4px 6px; }
+
+  .nav-bar{ padding:10px 12px; display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .nav-bar button{ font-size:15px; padding:9px 14px; border:2px solid var(--border); background:#fff; }
+  .nav-bar button:disabled{ opacity:.35; }
+  .nav-bar input[type=range]{ flex:1; }
+  .page-indicator{ font-size:12px; min-width:78px; text-align:center; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ============ 화면 1: 목록 ============ -->
+<div class="screen active" id="listScreen">
+  <div class="topbar">
+    <div class="left">
+      <button class="btn" id="openFolderBtn">📁 파일 열기</button>
+      <select id="sortSelect">
+        <option value="desc">최신순</option>
+        <option value="asc">오래된순</option>
+      </select>
+    </div>
+  </div>
+  <div class="status-line" id="statusLine"></div>
+  <ul class="file-list" id="fileList"></ul>
+</div>
+
+<!-- ============ 화면 2: 리더 ============ -->
+<div class="screen" id="readerScreen">
+  <div class="topbar">
+    <button class="btn" id="backBtn">◀ 목록</button>
+    <div class="title" id="fileTitle">-</div>
+    <div class="font-ctrl">
+      <button id="fontMinus">A-</button>
+      <button id="fontPlus">A+</button>
+    </div>
+  </div>
+  <div class="page-viewport" id="pageViewport">
+    <div class="page-content" id="pageContent"></div>
+  </div>
+  <div class="nav-bar">
+    <button id="prevBtn" disabled>◀</button>
+    <input type="range" id="pageSlider" min="1" max="1" value="1" disabled>
+    <span class="page-indicator" id="pageIndicator">- / -</span>
+    <button id="nextBtn" disabled>▶</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const md = window.markdownit({ html:false, linkify:false, typographer:false });
+
+  // ---------- DOM ----------
+  const listScreen = document.getElementById('listScreen');
+  const readerScreen = document.getElementById('readerScreen');
+  const openFolderBtn = document.getElementById('openFolderBtn');
+  const sortSelect = document.getElementById('sortSelect');
+  const statusLine = document.getElementById('statusLine');
+  const fileListEl = document.getElementById('fileList');
+  const backBtn = document.getElementById('backBtn');
+  const fileTitleEl = document.getElementById('fileTitle');
+  const pageViewport = document.getElementById('pageViewport');
+  const pageContentEl = document.getElementById('pageContent');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageSlider = document.getElementById('pageSlider');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const fontMinus = document.getElementById('fontMinus');
+  const fontPlus = document.getElementById('fontPlus');
+
+  let files = [];
+  let dirHandle = null;
+  let currentFile = null;
+  let currentPage = 1;
+  let totalPages = 1;
+  let fontSize = 19;
+
+  const LAST_FILE_KEY = 'md-eink-viewer:lastfile';
+  const POS_KEY = 'md-eink-viewer:lastpos';
+
+  // ---------- IndexedDB: 폴더 핸들 기억 ----------
+  function idbOpen(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('md-eink-viewer', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, val){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(val, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbGet(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readonly');
+      const req = tx.objectStore('kv').get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---------- 부팅: 기억된 폴더 자동 로드 ----------
+  (async function boot(){
+    if (!window.showDirectoryPicker){
+      statusLine.textContent = '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge에서 열어주세요.';
+      return;
+    }
+    try{
+      const savedHandle = await idbGet('dirHandle');
+      if (savedHandle){
+        const perm = await savedHandle.queryPermission({ mode:'read' });
+        if (perm === 'granted'){
+          dirHandle = savedHandle;
+          await loadFileList();
+          maybeResumeLastFile();
+          return;
+        }
+      }
+    }catch(e){ /* 무시하고 빈 목록 표시 */ }
+    statusLine.textContent = '오른쪽 "📁 파일 열기"로 md 폴더를 선택하세요.';
+  })();
+
+  openFolderBtn.addEventListener('click', async () => {
+    if (!window.showDirectoryPicker){
+      alert('이 환경은 폴더 선택 API를 지원하지 않습니다. 다운로드 후 Chrome/Edge에서 열어주세요.');
+      return;
+    }
+    try{
+      const handle = await window.showDirectoryPicker();
+      dirHandle = handle;
+      await idbSet('dirHandle', handle);
+      await loadFileList();
+    }catch(e){ console.log('folder pick cancelled', e); }
+  });
+
+  async function loadFileList(){
+    statusLine.textContent = '불러오는 중...';
+    const collected = [];
+    for await (const [name, handle] of dirHandle.entries()){
+      if (handle.kind === 'file' && name.toLowerCase().endsWith('.md')){
+        const f = await handle.getFile();
+        collected.push({ name, handle, lastModified: f.lastModified });
+      }
+    }
+    files = collected;
+    statusLine.textContent = files.length + '개 파일';
+    renderFileList();
+  }
+
+  sortSelect.addEventListener('change', renderFileList);
+
+  function renderFileList(){
+    if (files.length === 0){
+      fileListEl.innerHTML = '<div class="list-empty">.md 파일이 없습니다.</div>';
+      return;
+    }
+    const dir = sortSelect.value;
+    const sorted = [...files].sort((a,b) => dir === 'asc'
+      ? a.lastModified - b.lastModified
+      : b.lastModified - a.lastModified);
+
+    fileListEl.innerHTML = '';
+    sorted.forEach(f => {
+      const li = document.createElement('li');
+      const d = new Date(f.lastModified);
+      const dateStr = d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+      li.innerHTML = '<span class="fname">' + escapeHtml(f.name) + '</span><span class="fdate">' + dateStr + '</span>';
+      li.addEventListener('click', () => openFile(f));
+      fileListEl.appendChild(li);
+    });
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function maybeResumeLastFile(){
+    const lastName = localStorage.getItem(LAST_FILE_KEY);
+    if (!lastName) return;
+    const match = files.find(f => f.name === lastName);
+    if (match) openFile(match);
+  }
+
+  // ---------- 화면 전환 ----------
+  function showScreen(name){
+    listScreen.classList.toggle('active', name === 'list');
+    readerScreen.classList.toggle('active', name === 'reader');
+  }
+  backBtn.addEventListener('click', () => showScreen('list'));
+
+  // ---------- 파일 열기 (리더 화면으로 전환) ----------
+  async function openFile(f){
+    currentFile = f;
+    localStorage.setItem(LAST_FILE_KEY, f.name);
+    fileTitleEl.textContent = f.name;
+    showScreen('reader');
+
+    const file = await f.handle.getFile();
+    const text = await file.text();
+    pageContentEl.innerHTML = md.render(text);
+
+    paginate({ restoreFromRatio:true });
+  }
+
+  // ---------- 페이지네이션 ----------
+  function loadPositions(){
+    try{ return JSON.parse(localStorage.getItem(POS_KEY) || '{}'); }catch(e){ return {}; }
+  }
+  function savePosition(name, ratio){
+    const pos = loadPositions();
+    pos[name] = ratio;
+    localStorage.setItem(POS_KEY, JSON.stringify(pos));
+  }
+
+  function paginate(opts){
+    opts = opts || {};
+    const viewportWidth = pageViewport.clientWidth;
+    if (viewportWidth <= 0) return;
+
+    pageContentEl.style.transform = 'translateX(0px)';
+    pageContentEl.style.columnWidth = viewportWidth + 'px';
+    pageContentEl.style.width = viewportWidth + 'px';
+
+    requestAnimationFrame(() => {
+      const scrollW = pageContentEl.scrollWidth;
+      totalPages = Math.max(1, Math.round(scrollW / viewportWidth));
+
+      let targetPage = currentPage;
+      if (opts.restoreFromRatio){
+        const pos = loadPositions();
+        const ratio = pos[currentFile.name];
+        targetPage = ratio ? Math.max(1, Math.min(totalPages, Math.round(ratio * totalPages))) : 1;
+      }
+      targetPage = Math.max(1, Math.min(totalPages, targetPage));
+
+      pageSlider.min = 1;
+      pageSlider.max = totalPages;
+      pageSlider.disabled = totalPages <= 1;
+
+      goToPage(targetPage, { save:false });
+    });
+  }
+
+  function goToPage(n, opts){
+    opts = opts || {};
+    n = Math.max(1, Math.min(totalPages, n));
+    currentPage = n;
+    const viewportWidth = pageViewport.clientWidth;
+    pageContentEl.style.transform = 'translateX(-' + ((n-1) * viewportWidth) + 'px)';
+
+    pageSlider.value = n;
+    pageIndicator.textContent = n + ' / ' + totalPages;
+    prevBtn.disabled = n <= 1;
+    nextBtn.disabled = n >= totalPages;
+
+    if (opts.save !== false && currentFile){
+      savePosition(currentFile.name, n / totalPages);
+    }
+  }
+
+  prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
+  nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
+
+  pageSlider.addEventListener('input', () => {
+    pageIndicator.textContent = pageSlider.value + ' / ' + totalPages + ' (이동예정)';
+  });
+  pageSlider.addEventListener('change', () => {
+    goToPage(parseInt(pageSlider.value, 10));
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (!readerScreen.classList.contains('active')) return;
+    if (['ArrowLeft','PageUp'].includes(e.key)) goToPage(currentPage - 1);
+    if (['ArrowRight','PageDown',' '].includes(e.key)) goToPage(currentPage + 1);
+    if (e.key === 'Escape') showScreen('list');
+  });
+
+  fontMinus.addEventListener('click', () => { fontSize = Math.max(14, fontSize - 2); applyFontSize(); });
+  fontPlus.addEventListener('click',  () => { fontSize = Math.min(30, fontSize + 2); applyFontSize(); });
+  function applyFontSize(){
+    document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+    if (currentFile) paginate({ restoreFromRatio:true });
+  }
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (currentFile && readerScreen.classList.contains('active')) paginate({ restoreFromRatio:true });
+    }, 150);
+  });
+
+})();
+</script>
+</body>
+</html>

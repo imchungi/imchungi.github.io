@@ -134,22 +134,28 @@
   const fontMinus = document.getElementById('fontMinus');
   const fontPlus = document.getElementById('fontPlus');
 
-  let files = [];
-  let dirHandle = null;
-  let currentFile = null;
+  let currentFile = null;      // { name, handle }
   let currentRawHtml = '';
   let pages = [''];
   let currentPage = 1;
   let totalPages = 1;
-  let fontSize = 19;
+  const FONT_KEY = 'md-eink-viewer:fontsize';
+  let fontSize = parseInt(localStorage.getItem(FONT_KEY) || '19', 10);
+  document.documentElement.style.setProperty('--font-size', fontSize + 'px');
 
-  const LAST_FILE_KEY = 'md-eink-viewer:lastfile';
   const POS_KEY = 'md-eink-viewer:lastpos';
 
+  // ---------- IndexedDB: 파일 핸들 기억 (최근 목록 + 마지막으로 쓴 위치) ----------
+  // FileSystemFileHandle을 저장해두면, 다음에 showOpenFilePicker의 startIn으로 넘겨서
+  // "그 파일이 있던 폴더" 위치에서 자동으로 열리게 할 수 있다 -> 폴더를 따로 스캔/기억할 필요 없음
   function idbOpen(){
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('md-eink-viewer', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      const req = indexedDB.open('md-eink-viewer', 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('recent')) db.createObjectStore('recent', { keyPath:'name' });
+      };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
@@ -172,73 +178,93 @@
       req.onerror = () => reject(req.error);
     });
   }
+  async function recentPut(entry){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('recent', 'readwrite');
+      tx.objectStore('recent').put(entry);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function recentAll(){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('recent', 'readonly');
+      const req = tx.objectStore('recent').getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
+  // ---------- 부팅 ----------
   (async function boot(){
-    if (!window.showDirectoryPicker){
-      statusLine.textContent = '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge에서 열어주세요.';
+    if (!window.showOpenFilePicker){
+      statusLine.textContent = '이 브라우저는 파일 선택 API를 지원하지 않습니다. Chrome/Edge에서 열어주세요.';
       return;
     }
     try{
-      const savedHandle = await idbGet('dirHandle');
-      if (savedHandle){
-        const perm = await savedHandle.queryPermission({ mode:'read' });
+      const lastHandle = await idbGet('lastFileHandle');
+      if (lastHandle){
+        const perm = await lastHandle.queryPermission({ mode:'read' });
         if (perm === 'granted'){
-          dirHandle = savedHandle;
-          await loadFileList();
-          maybeResumeLastFile();
+          await openHandle(lastHandle); // 권한 살아있으면 마지막 파일로 바로 리더 진입
           return;
         }
       }
-    }catch(e){}
-    statusLine.textContent = '오른쪽 "파일 열기"로 md 폴더를 선택하세요.';
+    }catch(e){ /* 무시 */ }
+    await renderFileList(); // 권한 없으면 최근 목록 화면 표시
+    statusLine.textContent = '"📁 파일 열기"로 md 파일을 선택하세요.';
   })();
 
+  // ---------- 파일 열기 버튼: 바로 OS 파일 선택창, 마지막 폴더에서 시작 ----------
   openFolderBtn.addEventListener('click', async () => {
-    if (!window.showDirectoryPicker){
-      alert('이 환경은 폴더 선택 API를 지원하지 않습니다. 다운로드 후 Chrome/Edge에서 열어주세요.');
+    if (!window.showOpenFilePicker){
+      alert('이 환경은 파일 선택 API를 지원하지 않습니다. 다운로드 후 Chrome/Edge에서 열어주세요.');
       return;
     }
     try{
-      const handle = await window.showDirectoryPicker();
-      dirHandle = handle;
-      await idbSet('dirHandle', handle);
-      await loadFileList();
-    }catch(e){ console.log('folder pick cancelled', e); }
+      const lastHandle = await idbGet('lastFileHandle').catch(() => null);
+      const opts = {
+        types: [{ description:'Markdown', accept:{ 'text/markdown':['.md'] } }],
+        excludeAcceptAllOption:false,
+        multiple:false
+      };
+      if (lastHandle) opts.startIn = lastHandle; // 파일 핸들을 넘기면 그 폴더에서 다이얼로그가 열림
+      const [handle] = await window.showOpenFilePicker(opts);
+      await openHandle(handle);
+    }catch(e){ console.log('file pick cancelled', e); }
   });
-
-  async function loadFileList(){
-    statusLine.textContent = '불러오는 중...';
-    const collected = [];
-    for await (const [name, handle] of dirHandle.entries()){
-      if (handle.kind === 'file' && name.toLowerCase().endsWith('.md')){
-        const f = await handle.getFile();
-        collected.push({ name, handle, lastModified: f.lastModified });
-      }
-    }
-    files = collected;
-    statusLine.textContent = files.length + '개 파일';
-    renderFileList();
-  }
 
   sortSelect.addEventListener('change', renderFileList);
 
-  function renderFileList(){
-    if (files.length === 0){
-      fileListEl.innerHTML = '<div class="list-empty">.md 파일이 없습니다.</div>';
+  async function renderFileList(){
+    const all = await recentAll().catch(() => []);
+    if (all.length === 0){
+      fileListEl.innerHTML = '<div class="list-empty">최근에 연 파일이 없습니다.<br><br>상단 "📁 파일 열기"로 md 파일을 선택하세요.</div>';
       return;
     }
     const dir = sortSelect.value;
-    const sorted = [...files].sort((a,b) => dir === 'asc'
-      ? a.lastModified - b.lastModified
-      : b.lastModified - a.lastModified);
+    const sorted = [...all].sort((a,b) => dir === 'asc'
+      ? a.lastOpened - b.lastOpened
+      : b.lastOpened - a.lastOpened);
 
     fileListEl.innerHTML = '';
-    sorted.forEach(f => {
+    sorted.forEach(entry => {
       const li = document.createElement('li');
-      const d = new Date(f.lastModified);
+      const d = new Date(entry.lastOpened);
       const dateStr = d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
-      li.innerHTML = '<span class="fname">' + escapeHtml(f.name) + '</span><span class="fdate">' + dateStr + '</span>';
-      li.addEventListener('click', () => openFile(f));
+      li.innerHTML = '<span class="fname">' + escapeHtml(entry.name) + '</span><span class="fdate">' + dateStr + ' 열람</span>';
+      li.addEventListener('click', async () => {
+        try{
+          const perm = await entry.handle.queryPermission({ mode:'read' });
+          if (perm !== 'granted'){
+            const req = await entry.handle.requestPermission({ mode:'read' }); // 클릭 = 사용자 제스처
+            if (req !== 'granted') { alert('파일 접근 권한이 필요합니다.'); return; }
+          }
+          openHandle(entry.handle);
+        }catch(e){ alert('파일을 열 수 없습니다. 다시 "파일 열기"로 선택해주세요.'); }
+      });
       fileListEl.appendChild(li);
     });
   }
@@ -247,29 +273,25 @@
     return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function maybeResumeLastFile(){
-    const lastName = localStorage.getItem(LAST_FILE_KEY);
-    if (!lastName) return;
-    const match = files.find(f => f.name === lastName);
-    if (match) openFile(match);
-  }
-
   function showScreen(name){
     listScreen.classList.toggle('active', name === 'list');
     readerScreen.classList.toggle('active', name === 'reader');
   }
-  backBtn.addEventListener('click', () => showScreen('list'));
+  backBtn.addEventListener('click', () => { renderFileList(); showScreen('list'); });
 
-  async function openFile(f){
-    currentFile = f;
-    localStorage.setItem(LAST_FILE_KEY, f.name);
-    fileTitleEl.textContent = f.name;
+  // ---------- 핸들로부터 파일 열기 (목록 갱신 + 마지막 핸들 기억 + 리더 진입) ----------
+  async function openHandle(handle){
+    const file = await handle.getFile();
+    currentFile = { name: file.name, handle };
+
+    await idbSet('lastFileHandle', handle);
+    await recentPut({ name: file.name, handle, lastOpened: Date.now() });
+
+    fileTitleEl.textContent = file.name;
     showScreen('reader');
 
-    const file = await f.handle.getFile();
     const text = await file.text();
     currentRawHtml = md.render(text);
-
     paginate({ restoreFromRatio:true });
   }
 
@@ -371,6 +393,7 @@
   fontPlus.addEventListener('click',  () => { fontSize = Math.min(30, fontSize + 2); applyFontSize(); });
   function applyFontSize(){
     document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+    localStorage.setItem(FONT_KEY, String(fontSize));
     if (currentFile) paginate({ restoreFromRatio:true });
   }
 

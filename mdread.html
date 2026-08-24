@@ -59,6 +59,10 @@
 
   .page-viewport{ flex:1; overflow:hidden; position:relative; border-bottom:2px solid var(--border); }
   .page-content{
+    /* display:inline-block = shrink-to-fit. 폭을 고정하지 않아야
+       브라우저가 문서 전체를 담을 만큼 컬럼을 옆으로 계속 늘려준다.
+       (폭을 고정하면 그 좁은 박스 안에 전체 문서를 욱여넣어버림 -> 압축/겹침 버그) */
+    display:inline-block; vertical-align:top;
     height:100%; column-gap:0; padding:24px 22px;
     font-size:var(--font-size); line-height:var(--line-h);
   }
@@ -143,6 +147,7 @@
   let currentFile = null;
   let currentPage = 1;
   let totalPages = 1;
+  let pageStepPx = 0; // 실제 측정된 컬럼 1개당 폭(px). 매 이동마다 재측정하지 않고 고정 사용 -> 드리프트 방지
   let fontSize = 19;
 
   const LAST_FILE_KEY = 'md-eink-viewer:lastfile';
@@ -296,25 +301,30 @@
 
     pageContentEl.style.transform = 'translateX(0px)';
     pageContentEl.style.columnWidth = viewportWidth + 'px';
-    pageContentEl.style.width = viewportWidth + 'px';
+    // width는 절대 고정하지 않는다 (inline-block shrink-to-fit이 알아서 넓힘)
 
+    // 레이아웃이 완전히 자리잡을 시간을 주기 위해 2프레임 대기
     requestAnimationFrame(() => {
-      const scrollW = pageContentEl.scrollWidth;
-      totalPages = Math.max(1, Math.round(scrollW / viewportWidth));
+      requestAnimationFrame(() => {
+        const scrollW = pageContentEl.scrollWidth;
+        totalPages = Math.max(1, Math.round(scrollW / viewportWidth));
+        // 실제 컬럼 1개당 정확한 폭 (반올림 오차를 여기서 흡수)
+        pageStepPx = scrollW / totalPages;
 
-      let targetPage = currentPage;
-      if (opts.restoreFromRatio){
-        const pos = loadPositions();
-        const ratio = pos[currentFile.name];
-        targetPage = ratio ? Math.max(1, Math.min(totalPages, Math.round(ratio * totalPages))) : 1;
-      }
-      targetPage = Math.max(1, Math.min(totalPages, targetPage));
+        let targetPage = currentPage;
+        if (opts.restoreFromRatio){
+          const pos = loadPositions();
+          const ratio = pos[currentFile.name];
+          targetPage = ratio ? Math.max(1, Math.min(totalPages, Math.round(ratio * totalPages))) : 1;
+        }
+        targetPage = Math.max(1, Math.min(totalPages, targetPage));
 
-      pageSlider.min = 1;
-      pageSlider.max = totalPages;
-      pageSlider.disabled = totalPages <= 1;
+        pageSlider.min = 1;
+        pageSlider.max = totalPages;
+        pageSlider.disabled = totalPages <= 1;
 
-      goToPage(targetPage, { save:false });
+        goToPage(targetPage, { save:false });
+      });
     });
   }
 
@@ -322,8 +332,7 @@
     opts = opts || {};
     n = Math.max(1, Math.min(totalPages, n));
     currentPage = n;
-    const viewportWidth = pageViewport.clientWidth;
-    pageContentEl.style.transform = 'translateX(-' + ((n-1) * viewportWidth) + 'px)';
+    pageContentEl.style.transform = 'translateX(-' + ((n-1) * pageStepPx) + 'px)';
 
     pageSlider.value = n;
     pageIndicator.textContent = n + ' / ' + totalPages;

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>써클853 V1</title>
+<style>
+  :root{
+    --bg:#17181b;
+    --panel:#1f2124;
+    --panel-2:#26282c;
+    --border:#34363b;
+    --text:#eae7e0;
+    --text-dim:#93938d;
+    --red:#c1392b;
+    --blue:#4f7cac;
+    --green:#5c8a63;
+    --amber:#c99a3f;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:480px; margin:0 auto; padding:22px 16px 48px; }
+
+  header.top{ margin-bottom:18px; }
+  h1{ font-size:21px; font-weight:800; letter-spacing:-0.02em; margin:0 0 3px; }
+  .sub{ color:var(--text-dim); font-size:12.5px; }
+
+  .rm-panel{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; }
+  .rm-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(84px,1fr)); gap:8px; }
+  .rm-field label{ display:block; font-size:10.5px; color:var(--text-dim); margin-bottom:4px; }
+  .rm-field input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font:600 15px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    padding:8px 5px; border-radius:6px; text-align:right;
+  }
+  .rm-field input:focus{ outline:2px solid var(--blue); outline-offset:1px; }
+  .rm-hint{ font-size:10.5px; color:var(--text-dim); margin-top:9px; line-height:1.5; }
+  .save-state{ font-size:10.5px; color:var(--green); margin-top:4px; text-align:right; height:13px; }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .tab{ flex:1; padding:11px 0; text-align:center; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text-dim); font-weight:700; font-size:13.5px; cursor:pointer; }
+  .tab[data-day="mon"].active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .tab[data-day="wed"].active{ background:var(--amber); border-color:var(--amber); color:#1a1200; }
+  .tab[data-day="fri"].active{ background:var(--green); border-color:var(--green); color:#fff; }
+
+  .week-select{ display:flex; gap:6px; margin-bottom:16px; }
+  .week-btn{ flex:1; padding:8px 0; text-align:center; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text-dim); font-size:11.5px; font-weight:600; cursor:pointer; }
+  .week-btn.active{ border-color:var(--text); color:var(--text); background:var(--panel-2); }
+  .week-btn.peak.active{ border-color:var(--red); color:var(--red); }
+  .week-btn.deload.active{ border-color:var(--green); color:var(--green); }
+
+  .day-panel{ display:none; }
+  .day-panel.active{ display:block; }
+
+  .reps-line{ font-size:11.5px; color:var(--text-dim); margin-bottom:10px; }
+
+  .lift-card{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:13px 15px; margin-bottom:9px; display:flex; justify-content:space-between; align-items:center; }
+  .mon-accent .lift-card{ border-left:3px solid var(--blue); }
+  .wed-accent .lift-card{ border-left:3px solid var(--amber); }
+  .fri-accent .lift-card{ border-left:3px solid var(--green); }
+  .lift-name{ font-weight:700; font-size:14.5px; }
+  .lift-note{ font-size:10.5px; color:var(--text-dim); margin-top:2px; }
+  .lift-right{ text-align:right; }
+  .lift-weight{ font:700 19px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  .lift-pct{ font-size:10.5px; color:var(--text-dim); margin-top:3px; }
+
+  .joker-box{ border:1px dashed var(--red); border-radius:10px; padding:12px 14px; margin:14px 0 4px; }
+  .joker-title{ color:var(--red); font-weight:800; font-size:12.5px; margin-bottom:8px; }
+  .joker-row{ display:flex; justify-content:space-between; font-size:13.5px; padding:3px 0; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  .joker-row span:last-child{ color:var(--text-dim); font-size:12px; }
+  .joker-note{ font-size:10.5px; color:var(--text-dim); margin-top:9px; line-height:1.6; }
+
+  .accessory{ font-size:11.5px; color:var(--text-dim); border-top:1px solid var(--border); margin-top:14px; padding-top:12px; line-height:1.7; }
+  .accessory b{ color:var(--text); }
+
+  .option-note{ font-size:11px; color:var(--text-dim); background:var(--panel-2); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.6; }
+
+  .comments{ margin-top:26px; border-top:1px solid var(--border); padding-top:16px; }
+  .comments h2{ font-size:12.5px; color:var(--amber); margin:0 0 10px; font-weight:700; }
+  .comments ul{ margin:0 0 4px; padding-left:17px; font-size:12px; color:var(--text-dim); line-height:1.7; }
+  .comments li{ margin-bottom:7px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>써클853 V1</h1>
+    <div class="sub">RM 기반 4주 파동 사이클 · 값을 바꾸면 전체가 자동 재계산됩니다</div>
+  </header>
+
+  <div class="rm-panel">
+    <div class="rm-grid">
+      <div class="rm-field"><label>벤치</label><input type="number" step="2.5" id="rm-bench"></div>
+      <div class="rm-field"><label>스쿼트</label><input type="number" step="2.5" id="rm-squat"></div>
+      <div class="rm-field"><label>데드리프트</label><input type="number" step="2.5" id="rm-deadlift"></div>
+      <div class="rm-field"><label>가중풀업</label><input type="number" step="2.5" id="rm-pullup"></div>
+      <div class="rm-field"><label>바벨로우</label><input type="number" step="2.5" id="rm-row"></div>
+    </div>
+    <div class="rm-hint">RM은 정해진 테스트 없이 가끔 시도해본 비공식 PR 기준. 새 기록이 나오면 여기서 바로 갱신하면 됨.</div>
+    <div class="save-state" id="save-state"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-day="mon">월 · Power</div>
+    <div class="tab" data-day="wed">수 · 유지</div>
+    <div class="tab" data-day="fri">금 · Volume</div>
+  </div>
+
+  <div class="week-select">
+    <button class="week-btn active" data-week="0">1주</button>
+    <button class="week-btn" data-week="1">2주</button>
+    <button class="week-btn peak" data-week="2">3주 · 피크</button>
+    <button class="week-btn deload" data-week="3">4주 · 디로드</button>
+  </div>
+
+  <div class="day-panel active mon-accent" id="panel-mon">
+    <div class="reps-line" id="reps-mon"></div>
+    <div id="lifts-mon"></div>
+    <div class="joker-box" id="joker-mon">
+      <div class="joker-title">조커 (컨디션 좋을 때만 · 종목 1개까지)</div>
+      <div id="joker-rows-mon"></div>
+      <div class="joker-note">4세트째 여유 있으면 조커, 빡빡하면 백오프 1세트(60~70%, 5~8회), 폼이 무너졌으면 둘 다 생략. 조커에서 자연스럽게 PR이 나오면 위 RM을 그 값으로 갱신.</div>
+    </div>
+    <div class="accessory"><b>보조운동</b> — 컬 · 프레스 · 사이드레이즈, 10×3 (RM 미지정 고정 중량)</div>
+  </div>
+
+  <div class="day-panel wed-accent" id="panel-wed">
+    <div class="reps-line" id="reps-wed"></div>
+    <div id="lifts-wed"></div>
+    <div class="accessory"><b>보조운동</b> — 컬 · 프레스 · 사이드레이즈, 10×3 (RM 미지정 고정 중량)</div>
+  </div>
+
+  <div class="day-panel fri-accent" id="panel-fri">
+    <div class="reps-line" id="reps-fri"></div>
+    <div id="lifts-fri"></div>
+    <div class="option-note">옵션 — 스트롱리프트식 변형: 표의 무게로 탑세트 1개 → 나머지는 탑의 90%로 백오프. 톤수를 유지하려면 세트를 4→5개로 늘림. 지루할 때 변화 목적, 기본은 스트레이트.</div>
+  </div>
+
+  <div class="comments">
+    <h2>참고 코멘트</h2>
+    <ul>
+      <li>바벨로우 %(60→63→67%, 디로드 45%)는 문서에 정의된 적 없어서 이번에 새로 추정한 값이야. 실제로 해보고 너무 가볍거나 무거우면 숫자만 바로 고치면 돼.</li>
+      <li>OHP는 요청한 5개(벤치·스쿼트·데드·풀업·로우) 목록에 없어서 입력칸 없이 RM 75kg 고정값으로 계산해뒀어. 필요하면 입력칸 추가할게.</li>
+      <li>모든 무게는 2.5kg 단위로 항상 내림 처리돼 있어 — 어중간한 숫자는 늘 가벼운 쪽으로 떨어짐.</li>
+      <li>조커 숫자는 "시도해볼 목표"일 뿐 자동 강제가 아니야. 실행 여부는 그날 4세트째 느낌으로 판단하는 규칙 그대로 적용해야 함.</li>
+      <li>로우 · 풀업이 등 · 이두에 주는 간접 볼륨(0.5배 가중치)은 여기 반영 안 했어 — 이 계산기는 순수 무게 계산용이고, 부위별 볼륨 합산은 문서 9절 표를 참고.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "circle853-v1-rm";
+  const DEFAULT_RM = { bench:110, squat:190, deadlift:210, pullup:40, row:140 };
+
+  const PLANS = {
+    mon: {
+      reps: ["5×4","5×4","5×3","5×2"],
+      accentClass:"mon-accent",
+      lifts: [
+        { key:"bench",  name:"벤치프레스", pct:[85/110, 87.5/110, 90/110, 60/110] },
+        { key:"squat",  name:"스쿼트",     pct:[145/190, 150/190, 155/190, 100/190] },
+        { key:"pullup", name:"가중풀업",   pct:[17.5/40, 20/40, 22.5/40, 5/40], added:true }
+      ],
+      joker: {
+        bench:  [95/110, 97.5/110, 102.5/110, null],
+        squat:  [165/190, 170/190, 180/190, null],
+        pullup: [30/40, 32.5/40, 37.5/40, null]
+      }
+    },
+    wed: {
+      reps: ["5×3","5×3","3×3","5×2"],
+      accentClass:"wed-accent",
+      lifts: [
+        { key:"ohp",      name:"OHP",       fixedRM:75, pct:[50/75, 52.5/75, 55/75, 40/75] },
+        { key:"deadlift", name:"데드리프트", pct:[150/210, 157.5/210, 165/210, 115/210] },
+        { key:"row",      name:"바벨로우",   pct:[0.60, 0.63, 0.67, 0.45], repsOverride:["10×3","10×3","10×3","10×2"], estimated:true }
+      ]
+    },
+    fri: {
+      reps: ["8×4","8×4","8×4","8×2"],
+      accentClass:"fri-accent",
+      lifts: [
+        { key:"bench",  name:"벤치프레스", pct:[75/110, 77.5/110, 80/110, 55/110] },
+        { key:"squat",  name:"스쿼트",     pct:[125/190, 130/190, 135/190, 90/190] },
+        { key:"pullup", name:"가중풀업",   pct:[7.5/40, 10/40, 12.5/40, 0], added:true, zeroLabel:"맨몸" }
+      ]
+    }
+  };
+
+  let state = { day:"mon", week:0, rm: Object.assign({}, DEFAULT_RM) };
+  let saveTimer = null;
+
+  function roundDown25(x){
+    if (!isFinite(x) || x <= 0) return 0;
+    return Math.round((Math.floor(x / 2.5 + 1e-9) * 2.5) * 100) / 100;
+  }
+
+  function formatWeight(rounded, added, zeroLabel){
+    if (rounded <= 0 && zeroLabel) return zeroLabel;
+    const numStr = Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
+    return (added ? "+" : "") + numStr + "kg";
+  }
+
+  function getRM(key){
+    const v = parseFloat(state.rm[key]);
+    return isFinite(v) ? v : 0;
+  }
+
+  function render(){
+    const plan = PLANS[state.day];
+    const week = state.week;
+
+    document.getElementById("reps-" + state.day).textContent =
+      "이 주 반복 구성: " + plan.reps[week];
+
+    const container = document.getElementById("lifts-" + state.day);
+    container.innerHTML = "";
+    plan.lifts.forEach(function(lift){
+      const rm = lift.fixedRM != null ? lift.fixedRM : getRM(lift.key);
+      const pct = lift.pct[week];
+      const raw = rm * pct;
+      const rounded = roundDown25(raw);
+      const weightStr = formatWeight(rounded, lift.added, lift.zeroLabel);
+      const reps = lift.repsOverride ? lift.repsOverride[week] : plan.reps[week];
+      const pctStr = (pct * 100).toFixed(1) + "%";
+
+      const card = document.createElement("div");
+      card.className = "lift-card";
+      card.innerHTML =
+        '<div><div class="lift-name">' + lift.name + '</div>' +
+        '<div class="lift-note">' + reps +
+        (lift.fixedRM != null ? ' · RM 고정 ' + lift.fixedRM + 'kg' : '') +
+        (lift.estimated ? ' · 추정치' : '') + '</div></div>' +
+        '<div class="lift-right"><div class="lift-weight">' + weightStr + '</div>' +
+        '<div class="lift-pct">RM ' + pctStr + '</div></div>';
+      container.appendChild(card);
+    });
+
+    if (state.day === "mon"){
+      const jokerBox = document.getElementById("joker-mon");
+      const rows = document.getElementById("joker-rows-mon");
+      if (week === 3){
+        jokerBox.style.display = "none";
+      } else {
+        jokerBox.style.display = "block";
+        rows.innerHTML = "";
+        const jNames = { bench:"벤치", squat:"스쿼트", pullup:"풀업" };
+        Object.keys(PLANS.mon.joker).forEach(function(key){
+          const pct = PLANS.mon.joker[key][week];
+          const rm = getRM(key);
+          const rounded = roundDown25(rm * pct);
+          const isAdded = key === "pullup";
+          const weightStr = formatWeight(rounded, isAdded, null);
+          const row = document.createElement("div");
+          row.className = "joker-row";
+          row.innerHTML = "<span>" + jNames[key] + "</span><span>" + weightStr + " (" + (pct*100).toFixed(1) + "%)</span>";
+          rows.appendChild(row);
+        });
+      }
+    }
+  }
+
+  function switchDay(day){
+    state.day = day;
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.classList.toggle("active", t.dataset.day === day);
+    });
+    document.querySelectorAll(".day-panel").forEach(function(p){
+      p.classList.toggle("active", p.id === "panel-" + day);
+    });
+    render();
+  }
+
+  function switchWeek(weekIndex){
+    state.week = weekIndex;
+    document.querySelectorAll(".week-btn").forEach(function(b){
+      b.classList.toggle("active", parseInt(b.dataset.week, 10) === weekIndex);
+    });
+    render();
+  }
+
+  function setInputsFromState(){
+    Object.keys(DEFAULT_RM).forEach(function(key){
+      const el = document.getElementById("rm-" + key);
+      if (el) el.value = state.rm[key];
+    });
+  }
+
+  function showSaveState(text, isError){
+    const el = document.getElementById("save-state");
+    el.textContent = text;
+    el.style.color = isError ? "#c1392b" : "var(--green)";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ el.textContent = ""; }, 1600);
+  }
+
+  async function loadRM(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if (res && res.value){
+        const parsed = JSON.parse(res.value);
+        return Object.assign({}, DEFAULT_RM, parsed);
+      }
+    } catch (e){
+      // 저장된 값 없음 또는 조회 실패 — 기본값 사용
+    }
+    return Object.assign({}, DEFAULT_RM);
+  }
+
+  async function saveRM(){
+    try{
+      const result = await window.storage.set(STORAGE_KEY, JSON.stringify(state.rm), false);
+      if (result){ showSaveState("저장됨", false); }
+      else { showSaveState("저장 실패", true); }
+    } catch (e){
+      showSaveState("저장 실패", true);
+    }
+  }
+
+  function attachListeners(){
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.addEventListener("click", function(){ switchDay(t.dataset.day); });
+    });
+    document.querySelectorAll(".week-btn").forEach(function(b){
+      b.addEventListener("click", function(){ switchWeek(parseInt(b.dataset.week, 10)); });
+    });
+    Object.keys(DEFAULT_RM).forEach(function(key){
+      const el = document.getElementById("rm-" + key);
+      if (!el) return;
+      el.addEventListener("input", function(){
+        state.rm[key] = el.value;
+        render();
+      });
+      el.addEventListener("change", function(){
+        saveRM();
+      });
+    });
+  }
+
+  async function init(){
+    attachListeners();
+    render();
+    const loaded = await loadRM();
+    state.rm = loaded;
+    setInputsFromState();
+    render();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

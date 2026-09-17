@@ -145,7 +145,7 @@
   <div class="comments">
     <h2>참고 코멘트</h2>
     <ul>
-      <li>바벨로우 %(60→63→67%, 디로드 45%)는 문서에 정의된 적 없어서 이번에 새로 추정한 값이야. 실제로 해보고 너무 가볍거나 무거우면 숫자만 바로 고치면 돼.</li>
+      <li>OHP·바벨로우는 볼륨 지향(B안)으로 전환됨 — OHP 8×4(70→77%), 로우 8~10×3(70% 안팎). 더 이상 제 추정치가 아니라 직접 준 기준이야.</li>
       <li>모든 무게는 2.5kg 단위로 항상 내림 처리돼 있어 — 어중간한 숫자는 늘 가벼운 쪽으로 떨어짐.</li>
       <li>조커 숫자는 "시도해볼 목표"일 뿐 자동 강제가 아니야. 실행 여부는 그날 4세트째 느낌으로 판단하는 규칙 그대로 적용해야 함.</li>
       <li>로우 · 풀업이 등 · 이두에 주는 간접 볼륨(0.5배 가중치)은 여기 반영 안 했어 — 이 계산기는 순수 무게 계산용이고, 부위별 볼륨 합산은 문서 9절 표를 참고.</li>
@@ -180,9 +180,9 @@
       reps: ["5×3","5×3","3×3","5×2"],
       accentClass:"wed-accent",
       lifts: [
-        { key:"ohp",      name:"OHP",       pct:[50/75, 52.5/75, 55/75, 40/75] },
+        { key:"ohp",      name:"OHP",       pct:[52.5/75, 55/75, 57.5/75, 40/75], repsOverride:["8×4","8×4","8×4","8×2"], warmup:"웜업 40kg(53%)×10회 · 볼륨 미포함" },
         { key:"deadlift", name:"데드리프트", pct:[150/210, 157.5/210, 165/210, 115/210] },
-        { key:"row",      name:"바벨로우",   pct:[0.60, 0.63, 0.67, 0.45], repsOverride:["10×3","10×3","10×3","10×2"], estimated:true }
+        { key:"row",      name:"바벨로우",   pct:[97.5/140, 100/140, 102.5/140, 70/140], repsOverride:["8~10×3","8~10×3","8~10×3","8×2"] }
       ]
     },
     fri: {
@@ -220,7 +220,7 @@
     const week = state.week;
 
     document.getElementById("reps-" + state.day).textContent =
-      "이 주 반복 구성: " + plan.reps[week];
+      state.day === "wed" ? "종목별 반복 구성이 다름 — 카드별 확인" : "이 주 반복 구성: " + plan.reps[week];
 
     const container = document.getElementById("lifts-" + state.day);
     container.innerHTML = "";
@@ -239,7 +239,8 @@
         '<div><div class="lift-name">' + lift.name + '</div>' +
         '<div class="lift-note">' + reps +
         (lift.fixedRM != null ? ' · RM 고정 ' + lift.fixedRM + 'kg' : '') +
-        (lift.estimated ? ' · 추정치' : '') + '</div></div>' +
+        (lift.estimated ? ' · 추정치' : '') + '</div>' +
+        (lift.warmup ? '<div class="lift-note">' + lift.warmup + '</div>' : '') + '</div>' +
         '<div class="lift-right"><div class="lift-weight">' + weightStr + '</div>' +
         '<div class="lift-pct">RM ' + pctStr + '</div></div>';
       container.appendChild(card);
